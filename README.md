@@ -1,4 +1,4 @@
 # FreeArc'Next
-Read and improve [the documentation](https://github.com/Bulat-Ziganshin/FA/wiki/Lua-code)
+Read and improve [the documentation](https://github.com/Bulat-Ziganshin/FA/wiki)
 
 
