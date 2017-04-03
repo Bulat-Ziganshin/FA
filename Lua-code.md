@@ -1,6 +1,6 @@
 FA reads configuration information only from FA.INI (unlike ARC.EXE that reads all ARC\*.INI files), that should be placed to the same directory as FA executable. FA.INI has exactly the same structure as ARC.INI, plus allows to write Lua code in sections with headings `[Lua code*]`.
 
-FA contains builtin configuration file that you can display with `fa --print-config`. Its `[Lua code]` section provides [[examples|0.11/Builtin-Lua-option-definitions.md]] of options defined with Lua code. As of FA 0.11, `11 of 45` options are defined in Lua, including 100-line long `-mc` implementation.
+FA contains builtin configuration file that you can display with `fa --print-config`. Its `[Lua code]` section provides [examples](0.11/Builtin-Lua-option-definitions.md) of options defined with Lua code. As of FA 0.11, `11 of 45` options are defined in Lua, including 100-line long `-mc` implementation.
 
 * [What you can do with Lua code](#code)  
 * [Handling the compression method](#compression-method)  
@@ -20,7 +20,7 @@ FA contains builtin configuration file that you can display with `fa --print-con
 
 Lua code provided in config file is executed at the program start, right after executing builtin Lua code, and has access to the following resources:
 
-* all built-in Lua functions plus a few functions defined by the [[builtin Lua code|0.11/Builtin-Lua-startup-code.md]]
+* all built-in Lua functions plus a few functions defined by the [builtin Lua code](0.11/Builtin-Lua-startup-code.md)
 * read/write access to values of C++ options as pseudo-fields of the `command` table
 * read/write access to values of Lua options as fields of the `optvalue` table
 * services provided by C++ code
@@ -43,7 +43,7 @@ Pseudo-fields of the `command` table:
 * cmd - command name (a,add,x...)
 * arcname - archive name as specified at the command line
 * filenames - filenames specified in the command line (contents of listfiles is substituted instead of `@listfile` items)
-* [[other pseudofields providing read/write access to values of corresponding C++ options|0.11/Builtin-CPP-option-definitions.md#fields]]
+* [other pseudofields providing read/write access to values of corresponding C++ options](0.11/Builtin-CPP-option-definitions.md#fields)
 
 
 Services provided by C++ code:
@@ -111,7 +111,7 @@ If some concept (i.e. dictionary or block size) isn't supported by given algorit
 
 Also note that `compression_methods` contains compressor sequence strings like "exe+lzma:1g", for processing with getters and setters you need to split them into individual methods with `split_method` and then combine back with `join_method`.
 
-These functions are enough to implement options -lc, -ld, -md, -mm, -ms. You can learn how to deal with compression method looking at [[-mc implementation|0.11/Builtin-Lua-option-definitions.md]].
+These functions are enough to implement options -lc, -ld, -md, -mm, -ms. You can learn how to deal with compression method looking at [-mc implementation](0.11/Builtin-Lua-option-definitions.md).
 
 
 <a name="events"/>
@@ -201,7 +201,7 @@ If you know the option name, you can:
 * modify the textual part of option definition by calling `AddOption(name, [priority,] prefixes, description)`. `Priority` may be omitted and defaults to 0.
 * remove the option by calling `RemoveOption(name)`
 
-Here you can find [[names of C++ options|0.11/Builtin-CPP-option-definitions.md]] and [[names of builtin Lua options|0.11/Builtin-Lua-option-definitions.md]].
+Here you can find [names of C++ options](0.11/Builtin-CPP-option-definitions.md) and [names of builtin Lua options](0.11/Builtin-Lua-option-definitions.md).
 
 
 <a name="options-high-level"/>

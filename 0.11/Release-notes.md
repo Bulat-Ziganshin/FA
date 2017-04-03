@@ -56,14 +56,14 @@ Description of all parameters:
 By default, compression level parameter is set to 1, and other parameters are set to 0, that means "use default values as specified in the [table](https://github.com/facebook/zstd/blob/v1.1.0/lib/compress/zstd_compress.c#L3044)".
 
 ### Lua programming
-Major new feature of FA is its [[Lua programmability|../Lua-code.md]].
+Major new feature of FA is its [Lua programmability](../Lua-code.md).
 You can use Lua code to add/change/remove options, execute actions on operation start/finish, on warnings and errors,
 including sophosticated manipulations on compression methods, analysis of operation being performed and option settings. FA automatically executes `[Lua code]` sections from your `fa.ini`.
 
 Most of program options are already implemented by the built-in Lua code,
-and you can [[browse this code|Builtin-Lua-option-definitions.md]] in order to learn how to add your own options. 
+and you can [browse this code](Builtin-Lua-option-definitions.md) in order to learn how to add your own options. 
 
-[[`--filter` option|../Lua-code.md#file-filtering]] allows to select files to process with arbitrary Lua predicate based on file name, type, size, time and attr.
+[`--filter` option](../Lua-code.md#file-filtering) allows to select files to process with arbitrary Lua predicate based on file name, type, size, time and attr.
 
 ### Prefetching
 12 years ago FreeArc pioneered reading-ahead technique that significantly improved speed, when lots of small files are compressed, by prefetching them into large buffer (so-called read-ahead cache) in parallel with compression operation.
