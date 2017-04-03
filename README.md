@@ -6,8 +6,8 @@
   - [WIP: recovery record](Recovery-record)
 
 FA 0.11: Oct 08, 2016
-- [Release notes](FA-0.11-release-notes)
-- [Help screen](FA-0.11-help-screen)
-- [Builtin Lua startup code](FA-0.11-builtin-Lua-startup-code)
-- [Builtin Lua option definitions](FA-0.11-builtin-Lua-option-definitions)
-- [Builtin C++ option definitions](FA-0.11-builtin-CPP-option-definitions)
+- [Release notes](0.11/Release-notes)
+- [Help screen](0.11/Help-screen)
+- [Builtin Lua startup code](0.11/Builtin-Lua-startup-code)
+- [Builtin Lua option definitions](0.11/Builtin-Lua-option-definitions)
+- [Builtin C++ option definitions](0.11/Builtin-CPP-option-definitions)

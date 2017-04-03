@@ -63,7 +63,7 @@ including sophosticated manipulations on compression methods, analysis of operat
 Most of program options are already implemented by the built-in Lua code,
 and you can [[browse this code|FA 0.11 builtin Lua option definitions]] in order to learn how to add your own options. 
 
-[[`--filter` option|Lua-code#file-filtering]] allows to select files to process with arbitrary Lua predicate based on file name, type, size, time and attr.
+[[`--filter` option|../Lua-code#file-filtering]] allows to select files to process with arbitrary Lua predicate based on file name, type, size, time and attr.
 
 ### Prefetching
 12 years ago FreeArc pioneered reading-ahead technique that significantly improved speed, when lots of small files are compressed, by prefetching them into large buffer (so-called read-ahead cache) in parallel with compression operation.

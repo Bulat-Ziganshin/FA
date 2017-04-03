@@ -1,5 +1,5 @@
 ### Option names
-This is the C++ option definitions code as included in FA 0.11. The first column shows option names that may be used to [[modify/remove these builtin options|Lua-code#options]].
+This is the C++ option definitions code as included in FA 0.11. The first column shows option names that may be used to [[modify/remove these builtin options|../Lua-code#options]].
 ```c++
 {"deduplication_mode", deduplication_mode,     0, {"-dup",         "--deduplication"},                "global deduplication a-la ZPAQ"},
 {"config_env",       config_env,               0, {"-envVAR"},                                        "read default options from environment VAR (default: DEFAULT_VALUE)", true /*for_preparsing*/},
