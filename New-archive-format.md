@@ -9,7 +9,7 @@ WIP describing my current vision of new archive format that may supersede .arc i
 
 ## Local descriptor
 
-<ul></ul>Immediately follows the block it describes, saved in REVERSED byte order. Fields are:
+Immediately follows the block it describes, saved in REVERSED byte order. Fields are:
 - signature: 4-byte checksum of the next 8 bytes (CRC-32c with "ArC\2" as starting value)
 - descriptor checksum (4 bytes)
 - block type and two flags (1 byte):
@@ -28,13 +28,13 @@ WIP describing my current vision of new archive format that may supersede .arc i
 - original size
 - offset to previous local descriptor (from signature to signature)
 
-<ul></ul>Most fields are optional:
+Most fields are optional:
 - custom algorithms are encoded only when corresponding bit fields set to "custom"
 - AES parameters - only for encryption algo == aes == aes-256/ctr (custom encryption algos encode their params inside strings, as usual)
 - original size - only when data are compressed (i.e. compression algo bit field != none) AND "blocksize not encoded" flag isn't set
 - offset - only when chain-linking flag is set
 
-<ul></ul>There is also special maximum-reduced descriptor form - with the block being inlined. It was optimized for storing small control blocks up to a few hundred bytes and includes only the following fields:
+There is also special maximum-reduced descriptor form - with the block being inlined. It was optimized for storing small control blocks up to a few hundred bytes and includes only the following fields:
 - signature
 - descriptor+block checksum (4 bytes)
 - block type and two flags (1 byte)
@@ -52,22 +52,22 @@ So, the minimum archive size will be 2*4 bytes (initial/ending fixed signatures)
 
 This block may contain any archive meta-information, individual fields/groups are enabled by flags. All flags are placed at the block header, but as a matter of сonvenience, we describe them in corresponding chapters.
 
-<ul></ul>Header flags:
+Header flags:
 - none/custom set of archive description fields
 - none/default/custom set of solid block and file description fields
 
 
 ### Archive info
 
-<ul></ul>Header flags describing archive properties:
+Header flags describing archive properties:
 - archive locked?
 
-<ul></ul>Header flags describing presence of:
+Header flags describing presence of:
 - archive comment
 - SFX script
 - ECC settings
 
-<ul></ul>Fields:
+Fields:
 - archive comment: {UINT8} interpreted as UTF-8 string for displaying purposes
 - SFX script: {UINT8} interpreted as UTF-8 string for displaying purposes
 - ECC settings: UTF8Z
@@ -75,14 +75,14 @@ This block may contain any archive meta-information, individual fields/groups ar
 
 ### Solid blocks info
 
-<ul></ul>Solid blocks are described by the following fields:
+Solid blocks are described by the following fields:
 - offset to start (relative to start of the control block)
 - compression algorithm
 - encryption algorithm
 - original size
 - compressed size
 
-<ul></ul>If compression algorithm has multiple outputs, it also needs a list of output blocks, where each record contains:
+If compression algorithm has multiple outputs, it also needs a list of output blocks, where each record contains:
 - output number
 - block size
 
@@ -95,7 +95,7 @@ When multiple solid blocks may be interleaved, their output can be described wit
 
 ### Custom fields
 
-<ul></ul>Each custom field is represented by:
+Each custom field is represented by:
 - ID: UINT/UTF8Z?
 - data: {UINT8}
 

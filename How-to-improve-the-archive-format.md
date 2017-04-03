@@ -14,13 +14,13 @@
 
 My thoughts about possible new FreeArc archive format are ambivalent. OTOH, I know ways to improve the existing format. OTOH, this format serves good enough, so there are no real reasons to replace it except for passion to perfectness. So, my current plan is to start replacement from modes which are anyway unsupported by old FreeArc (such as deduplication), and use it for all archives only much later when most users will already upgrade to newer FreeArc versions. That follows isn't yet description of new format, but a collection of notes about its various aspects.
 
-<ul></ul>Goals:
+Goals:
 - extensible - allow adding new features in FA and by 3rd-party developers
 - compact - make smaller archives when standard compression/encryption algorithms are used and/or archive contains only a few files
 - fast - allow encoding/decoding millions of files in a fraction of second
 - reliable - accompany everything with wide checksums, allow to restore badly broken archives
 
-<ul></ul>Advanced features that should be covered:
+Advanced features that should be covered:
 - multi-volume archives
 - recovery blocks and volumes
 - multi-output compressors (like bcj2)
@@ -78,18 +78,18 @@ Shortcuts for describing field formats:
 
 ### Storing integer values
 
-<ul></ul>Some integer fields like CRC and date/time are better represented with fixed-width fields. But such fields as filesizes, solid/control block sizes, list lengths, should allow large range - up to 2^32..2^64, although most values are pretty small. We may choose among the following representations for such fields:
+Some integer fields like CRC and date/time are better represented with fixed-width fields. But such fields as filesizes, solid/control block sizes, list lengths, should allow large range - up to 2^32..2^64, although most values are pretty small. We may choose among the following representations for such fields:
 - fixed-width, preferably the same width as elements of arrays used in the program for these data
 - fixed-width, transposed, i.e. first byte of each value, then second byte of each value and so on
 - variable-width with 7+1 encoding (high bit in every byte is "end of value" flag)
 - variable-width discriminated by first byte (0..127 - single byte value, 128..191 - two bytes..., 255 - 9 bytes)
 
-<ul></ul>We can compare these approaches by the following criteria:
+We can compare these approaches by the following criteria:
 - decoding time (encoding time is rarely important)
 - size in uncompressed form
 - size in compressed form
 
-<ul></ul>Decoding time:
+Decoding time:
 - fixed width is fastest of course, even if values should be extended/truncated during the decoding. It is as fast as load/store + possible SIMD pack or unpack operation
 - transposed is a bit slower, it is load/store + byte shuffling
 - variable-width discriminated by first byte require sequence of dependent memory loads, 2 loads/element i.e. 8 cycles/element. But it may run at ~2 cycles/element, if we can process multiple independent streams simultaneously
@@ -121,7 +121,7 @@ We can improve the FreeArc format by replacing popular method strings with short
 
 Multi-output methods such as BCJ2 may be represented (recursively) by compression tree for each method output described like that: `bcj2(storing,lzma:1m,lzma:1m,rep(lzma:1m,lzma:64m))`. Further going, we may choose single "main output" for every algorithm and describe its further compression in the usual way: `bcj2(storing,lzma:1m,lzma:1m)+rep(lzma:1m)+lzma:64m`. Moreover, each output may have default algo of further compression, employed when explicit specification is absent: `bcj2+rep+lzma:64m`. Since most multi-output methods has only one large output, dropping explicit compression method specification for other outputs will be insignificant. Alternative syntax is possible, f.e. `bcj2(storing|lzma:1m|lzma:1m)` or `bcj2(storing/lzma:1m/lzma:1m)`.
 
-All encryption algorithms currently employed or planned for FreeArc are [[block ciphers|https://en.wikipedia.org/wiki/Block_cipher]] in [[CTR/CFB mode |https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation]]. This means that we can store all cipher params (salt+IV+checkCode) in fixed-width form, where width determined by a few parameters (key size, block size, checkCode size) instead of more universal, but less compact textual representation currently implemented by FreeArc.
+All encryption algorithms currently employed or planned for FreeArc are [block ciphers](https://en.wikipedia.org/wiki/Block_cipher) in [CTR/CFB mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation). This means that we can store all cipher params (salt+IV+checkCode) in fixed-width form, where width determined by a few parameters (key size, block size, checkCode size) instead of more universal, but less compact textual representation currently implemented by FreeArc.
 
 
 ### Solid blocks info
@@ -146,7 +146,7 @@ Some operations on archive metainformation doesn't need to be fast. In particula
 
 Most important is the speed of "archive open", in particular the following operations - list/extract single file or small group of files from (huge) archive, or show archive root directory in some GUI (it may be even non-root directory if GUI supports favorite directories inside archives!). Ideally, it should have "instant" execution i.e. in 0.2-0.3 seconds even for huge archives (just imagine backup of my whole HDD containing 3 millions of files). OTOH, archive directory with 3 million files is about 150 MB long. ZSTD algorithm can decompress it in about 10^9 CPU cycles. So, decoding one directory entry in 100 cycles is enough to make this time negligible compared even to fastest decompression.
 
-<ul></ul>Now let's analyze time required to decode one file entry. It includes:
+Now let's analyze time required to decode one file entry. It includes:
 - several fixed-size fields, such as CRC/date. Each require ~1 CPU cycle/value, so these times are negligible.
 - several variable-size fields: filesize, parent dir number. Depending on encoding approach, they may need from 1 to ~16 cycles/value.
 - one or two string fields - basename and may be extension. Each string field will probably require 1-2 cycles/byte plus 14 cycles/value - and even less if SIMD and/or CMOV instructions are employed.
