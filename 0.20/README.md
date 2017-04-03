@@ -9,7 +9,7 @@ FA'Next 0.20 includes the following improvements:
 
 - UI/logging got the full Unicode support, display pretty the same information as FreeArc, and implements all features of the `-di` option
 
-- compression methods are automatically limited to the RAM size, options -lc/-ld allows to further tune the RAM usage
+- compression methods are automatically limited to the RAM size, options -lc/-ld allows to further tune the RAM usage. Default settings is `-lc75% -ld1600m` so archives made with default `-ld` setting may have problems with extraction on 32-bit systems.
 
 - 64-bit versions of arc*.sfx modules, unarc.exe and unarc.dll
 
@@ -86,15 +86,13 @@ New options, grouped by their purpose (most are compatible with FreeArc, remaini
 
 Program can be called as `fa @commandfile` where commandfile is a file containing an entire command line. Note that command line in commandfile is split into separate arguments just by whitespace, there is no way yet to use quoting to provide arguments containing whitespace characters.
 
-Default settings is `-lc75% -ld1600m` so archives made with default settings may have problems with extraction on 32-bit systems.
-
 Option `-ds` now can reverse sort order by using '-' suffix after the sorting symbol, f.e. `--sort=ge-p-s` sorts by group, then extension and path in descending order, and finally by size.
 
 Option `--prefetch` now supports `10%` syntax that limits prefetching to 10% of the RAM size.
 
 Options -n/-x now support listfiles: `-x@excluded.lst`.
 
-On the start, FA'Next reads contents of all `fa-*.ini` files in the executable directory and executes them in the same way as `fa.ini`. At the same time, all the `fa-*.lua` files are executed as Lua scripts, so you can you use either Lua files or Lua sections in ini files to define additional commands, options, event handlers and so on. `-cfg-` option disables processing of these files (as well as processing of `fa.ini` file and `FA_CFG` environment variable).
+On the start, FA'Next reads contents of all `fa-*.ini` files in the executable directory and executes them in the same way as `fa.ini`. At the same time, all the `fa-*.lua` files are executed as Lua scripts, so you can you use either Lua files or Lua sections in ini files to define additional commands, options, event handlers and so on. `-cfg-` option disables processing of these files (as well as processing of `fa.ini` file and `FA_CFG` environment variable). Note that on Windows, this feature will work only if the executable directory doesn't have Unicode chars in the pathname.
 
 All options now are parsed by the Lua code and most options are consumed by the Lua code. You can add new options and commands and modify existing ones by dropping Lua scripts into the executable directory. The entire cmdline/inifile parsing is implemented in Lua (main procedure is ParseCommandLine() in file Cmdline.lua), so you can modify it too.
 
@@ -271,15 +269,15 @@ New Lua functionality can be split into 3 groups:
 
 ## Program startup
 
-At the program start, FA'Next creates a single Lua state, loads into this state built-in libraries, then executes built-in Lua scripts. The rest of configfile/cmdline processing is implemented in these scripts, in particular ParseCommandLine() function that is called by the C++ code to parse command line and config files, and supplementary functions in Cmdline.lua called by ParseCommandLine().
+At the program start, FA'Next creates a single Lua state, loads into this state built-in libraries, and then executes built-in Lua scripts. The rest of configfile/cmdline processing is implemented in these scripts, in particular ParseCommandLine() function that is called by the C++ code to parse command line and config files, and supplementary functions in Cmdline.lua called by ParseCommandLine().
 
-The built-in ParseCommandLine() loads all `fa-*.ini` and executes all `fa-*.lua` files in the executable directory, unless `-cfg-` option was given. You can use these files to modify existing behavior or add new one. It is implemented by defining new commands, options, event handlers, redefining existing ones and even redefining functions defined by the built-in Lua code.
+The built-in ParseCommandLine() loads all `fa-*.ini` and executes all `fa-*.lua` files in the executable directory, unless `-cfg-` option was given. You can use these files to modify existing behavior or add new one. It can be implemented by defining new commands, options, event handlers, redefining existing ones and even redefining functions defined by the built-in Lua code.
 
 If the executable directory contains `fa_init.lua` file, this file is executed instead of the built-in Lua scripts. The code of built-in scripts is provided in Lua directory of program distribution, as well as example of `fa_init.lua` that just executes these external scripts in the proper order. So by copying this file into the executable directory, you can replace execution of built-in code with execution of equivalent external code. And then you can modify these external scripts in the way you wish, totally replacing built-in Lua code with your own external one instead of replacing only individual functions using `fa-*.lua/ini` files.
 
-Since the only one Lua instance exists, all calls to Lua code from different C++ threads are serialized. You can use global Lua variables to hold state between the calls (and they are used a lot by the built-in Lua code.
+Since the only one Lua instance exists, all calls to Lua code from different C++ threads are serialized. You can use global Lua variables to keep state between the calls (that is used a lot by the built-in Lua code).
 
-A short summary of built-in modules (in the order of loading):
+A short summary of the built-in modules (in the order of loading):
 - Startup.lua: should be loaded first. Imports Penlight, defines extra utility functions and Unicode-aware file operations, provides the event handling machinery and defines most of the built-in events
 - OptionParser.lua: provides the option parsing and file-filtering machinery
 - Cmdline.lua: parses command line and config files, in particular executes command/option handlers as necessary
@@ -308,7 +306,7 @@ The filesystem operations, provided by all these libraries, aren't Unicode-aware
 - Dir.GetCurrent() - return current directory
 - SetTempDir(dirname) - set directory for temporary files, that may be created by external compressors
 
-Pseudo-table `archive` contains the following fields with information about the archive being processed: deduplication_mode, locked, comment, rr_settings, sfx_size, host_os.
+New pseudo-table `archive` contains the following fields with information about the archive being processed: deduplication_mode, locked, comment, rr_settings, sfx_size, host_os.
 
 WIP: `command.*` fields and C++ services defined in RegisterCppServicesForLua()
 
@@ -335,7 +333,7 @@ Another new service is UI (implemented by UI.lua). Lua code displays all the inf
 
 Finally, every compression method that is going to be used for compression/extraction or displayed, is "filtered" through the Lua functions that can modify it. This is used by the following modules:
 - Encryption.lua adds encryption algorithm to the compression method and generates encryption keys
-- Compression.lua limits memory usage according to the -lc/-ld options
+- Compression.lua limits memory usage according to the -lc/-ld options. `-lc` handler also "reduces" compression method if its blocksize/dictionary is larger than the solid block size.
 
 
 ### The event handling machinery
@@ -344,8 +342,8 @@ FA'Next 0.11 had a limited set of built-in events. Now there is a standard way t
 
 After declaring an event:
 - `EventHandlers.MyEventName` is a list of event handlers defined for this event
-- `RemoveHandler.MyEventName("HandlerLabel")` removes handler with the specified label from the list
-- `AddHandler.MyEventName(label="",priority=NORMAL_PRIORITY,handler)` adds a new handler function to the list, with specified label and priority. Note that label should be a string and priority should be a number, both may be omitted - in this case default values are used. If possible, use symbolic constants for priorities - HIGHEST_PRIORITY (largest number, executed first), HIGH_PRIORITY, NORMAL_PRIORITY, LOW_PRIORITY, LOWEST_PRIORITY. onMyEventName is defined as alias of AddHandler.MyEventName
+- `RemoveHandler.MyEventName("label")` removes handler with the specified label from the list
+- `AddHandler.MyEventName(label="",priority=NORMAL_PRIORITY,handler)` adds a new handler function to the list, with specified label and priority. Note that label should be a string and priority should be a number, both may be omitted - in this case default values are used. If possible, use symbolic constants for priorities - HIGHEST_PRIORITY (largest number, executed first), HIGH_PRIORITY, NORMAL_PRIORITY, LOW_PRIORITY, LOWEST_PRIORITY. `onMyEventName` is defined as alias of `AddHandler.MyEventName`
 - `RunEvent.MyEventName(arguments...)` runs handlers in this list, sorted by priority. All arguments are passed to each event handler. Execution stops at first positive result (i.e. not nil/false) returned by event handler, and this value is returned to the caller. Note that some events, defined in the built-in Lua code, has its own RunEvent.EventName implementations with different event handling strategy. You can do the same.
 
 The full list of events defined in the built-in code:
@@ -356,28 +354,48 @@ The full list of events defined in the built-in code:
 - RawCmdline and Cmdline - a way to define new commands (see below)
 - PreparseOption, Option and PostOption - a way to define new options (see below)
 - FileFilter - filtering files to process, nothing new since FA'Next 0.11
-- events transforming a method string prior to displaying it or compressing/extracting a solid block (see below)
+- events "filtering" a method string prior to displaying it or compressing/extracting a solid block (see below)
 
 
-### Method string transformation events
+### Method "filtering" events
 
-These events are called by the C++ code 1) prior to displaying a method string, 2) prior to compression or extraction of each solid block. They provide Lua code a way to modify a method string - remove unnecessary information prior to displaying, add encryption parameters, limit memory usage in the implementation of -lc/-ld options and so on.
+These events are called by the C++ code in two cases: 1) prior to displaying a method string, 2) prior to compression or extraction of each solid block. They provide Lua code a way to modify a method string - remove unnecessary information prior to displaying, add encryption parameters, limit memory usage for implementation of -lc/-ld options and so on.
 
-`RunEvent` for these events defined in the `ProcessEventByChainingHandlers()`. This procedure always calls all event handlers defined, and replaces the first parameter (method) with the result returned by event handler unless it was negative (i.e nil/false). I.e. event handler may either return modified method or return false/nil if it doesn't want to modify the method. `RunEvent` returns the combined result of all these modifications. Remaining `RunEvent` parameters are passed unchanged to each event handler, providing necessary contextual information.
+`RunEvent` for these events is defined in the `ProcessEventByChainingHandlers()`. This procedure always calls all event handlers defined, and replaces the first parameter (method) with the result returned by event handler unless it was negative (i.e nil/false). I.e. event handler may either return modified method or return false/nil if it doesn't want to modify the method. `RunEvent` returns the combined result of all these modifications. Remaining `RunEvent` parameters are passed unchanged to each event handler, providing necessary contextual information.
 
 - DisplayMethod(method) - filter method string prior to displaying it to the user. It may remove unnecessary or sensitive information (such as encryption keys).
-- `CompressBlockMethod/ExtractBlockMethodfunction(method,is_header,blocksize)` - process method string before compressing/extracting each solid block. `blocksize` is the solid block size. Of course, on extraction, all method transformations should keep compatibility with already compressed data.
+- `CompressBlockMethod/ExtractBlockMethodfunction(method,is_header,blocksize)` - process method string before compressing/extracting each solid block. `blocksize` is the solid block size. Of course, on extraction, the method transformations should keep compatibility with already compressed data.
 - `CompressHeaderBlockMethod/ExtractHeaderBlockMethod(method,blocksize)` - the same as above, but called only on header blocks (i.e. parts of the archive directory)
 - `CompressDataBlockMethod/ExtractDataBlockMethod(method,blocksize)` - called only on data blocks, i.e. everything else
 
-`ProcessEventByChainingHandlers()` may chain event handlers, i.e. when processing a sub-event, additionally runs handlers for its parent event. The C++ code never calls CompressBlockMethod/ExtractBlockMethod directly, instead they are chain-called by the Header/Data events, with extra `is_header` parameter added to distinguish the call source.
+`ProcessEventByChainingHandlers()` may chain event handlers, i.e. when processing a sub-event, additionally runs handlers for its parent event. The C++ code never calls CompressBlockMethod/ExtractBlockMethod directly, instead they are chain-called by the Header/Data events, with extra `is_header` parameter added to distinguish between call sources.
 
 
 ### Defining new commands and options
 
+`AddOption(option)` got new features:
+- `option.priority` defines a parsing priority. Unlike FA'Next 0.11, it cannot be specified in the list part of the `option` table. It is recommended to define all priorities using HIGHEST_PRIORITY..LOWEST_PRIORITY constants.
+- `option.post_processing` defines a function that will be called after parsing all options. Unlike FA'Next 0.11, it cannot be specified in the list part of the `option` table.
+- `option.post_priority` can be used to define the post_processing priority. All `post_processing` handlers and `PostOption` event handlers are executed together in their priority order.
+- `option.default_value` specifies the default option value (written to `optvalue[OPTION_NAME]` instead of nil at the start of parsing) or a function retuning the default value. String "DEFAULT_VALUE" in the help string is replaced with this value when help is displayed.
+- `option.for_preparsing` specifies that option should be handled at the preparsing stage too. Alternatively, you can define `PreparseOption` handler. In the built-in code, only `-cfg/-env` options are handled at this stage, so you hardly will ever need this feature.
 
+`AddCppOption(option)` is intended to define C++ options, i.e. options used in the C++ code. AddCppOption calls `AddOption(option)` with a few modifications:
+- high-level way of option definition doesn't require the option type - it's determined from the type of corresponding C++ variable, i.e. `command[option_name]`
+- if `default_value` is specified, it's assigned to the `command[option_name]`, otherwise - it's read from this variable
+- after successful call to option parser, value of `optvalue[option_name]` is assigned to the `command[option_name]`
 
-I provided a few new commands, more as examples of defining new commands, rather than something really useful:
+`AddOptions(list)` and `AddCppOptions(list)` just call AddOption/AddCppOption on each element of the list.
+
+Option parsers are now called with the additional argument containing the option name: `parser(param,name)`. Option post-processing handlers are called with name too: `post_processor([option_value,]name)`. As before, the `option_value` is passed only to options defined in the high-level way. Passing option name to handlers allow use the same handler for multiple similar options, as well as avoid duplication of option name in multiple parts of an option definition.
+
+***
+
+I added a highly experimental way to define new commands. Actually, you can do it any other way by redefining `ParseCommandLine()`. In the way I provided you can define new commands in the following ways:
+- handling `RawCmdline` event. The handler function gets an `argv` list and should return negative answer (false/nil) if command should be further processed and positive answer otherwise (in this case `ParseCommandLine()` immediately returns). It can modify the `argv` list although it can't just replace it with a different table. It's called prior to any command line processing, allowing one to define "raw" commands that doesn't use existing option definitions, or preprocess the command line prior to option handling.
+- handling `Cmdline` event. The handler function should read command/options from the usual global variables and can modify them. Return code is handled in the same way. It is called after all config-file/option parsing, but before the option post-processing.
+
+Built-in `Options.lua` employs this feature to implement a few new commands, more for teaching purposes rather than something really useful:
 - `fa run script [arguments...]` executes the Lua script, passing arguments in the global table arg
 - `fa run` executes script from stdin
 - `fa debug` starts Lua built-in debugging REPL
