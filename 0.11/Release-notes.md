@@ -36,7 +36,7 @@ Compared to ZPAQ:
 
 Full-archive deduplication may be also considered as alternative to the REP filter. Usually, replacing REP with deduplication makes archive bigger, but reduces memory required for decompression. In my experiment with compression of 4.7 GB, `-m4 -dup` produced archive 4% larger than `-m4`, but decompression memory was dropped from 735 to 179 MB, while compression and decompression speeds kept unchanged. Unfortunately, memory required for decompression cannot be controlled, and isn't known until archive is created.
 
-Using `-dup` and REP filter simultaneously is a bad idea, so shipped fa.ini includes [Lua code] section that removes REP from compression algos when `-dup` is enabled. You may disable this section as experiment. Consider this code as demo of using Lua to deal with compression method.
+Using `-dup` and REP filter simultaneously is a bad idea, so shipped fa.ini includes `[Lua code]` section that removes REP from compression algos when `-dup` is enabled. You may disable this section as experiment. Consider this code as demo of using Lua to deal with compression method.
 
 ### ZSTD support
 FA incorporates ZSTD 1.1, and shipped fa.ini replaces Tornado with ZSTD in -m1/m2 modes.
@@ -56,14 +56,14 @@ Description of all parameters:
 By default, compression level parameter is set to 1, and other parameters are set to 0, that means "use default values as specified in the [table](https://github.com/facebook/zstd/blob/v1.1.0/lib/compress/zstd_compress.c#L3044)".
 
 ### Lua programming
-Major new feature of FA is its [[Lua programmability|Lua code]].
+Major new feature of FA is its [[Lua programmability|../Lua-code.md]].
 You can use Lua code to add/change/remove options, execute actions on operation start/finish, on warnings and errors,
 including sophosticated manipulations on compression methods, analysis of operation being performed and option settings. FA automatically executes `[Lua code]` sections from your `fa.ini`.
 
 Most of program options are already implemented by the built-in Lua code,
-and you can [[browse this code|FA 0.11 builtin Lua option definitions]] in order to learn how to add your own options. 
+and you can [[browse this code|Builtin-Lua-option-definitions.md]] in order to learn how to add your own options. 
 
-[[`--filter` option|../Lua-code#file-filtering]] allows to select files to process with arbitrary Lua predicate based on file name, type, size, time and attr.
+[[`--filter` option|../Lua-code.md#file-filtering]] allows to select files to process with arbitrary Lua predicate based on file name, type, size, time and attr.
 
 ### Prefetching
 12 years ago FreeArc pioneered reading-ahead technique that significantly improved speed, when lots of small files are compressed, by prefetching them into large buffer (so-called read-ahead cache) in parallel with compression operation.
