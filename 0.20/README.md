@@ -26,17 +26,17 @@ Table of contents:
   * [Lizard and CELS compression](#lizard-and-cels-compression)
   * [UI and logfile](#ui-and-logfile)
 * [Lua support](#lua-support)
-  * [Program startup](#Program-startup)
+  * [Program startup](#program-startup)
   * [Services provided by the C++ code to the Lua code](#)
     * [Services](#)
     * [Variables](#)
   * [Services provided by the Lua code to itself](#)
   * [Services provided by the Lua code to the program](#)
-    * [The event handling machinery](#The-event-handling-machinery)
-    * [Method "filtering" events](#Method-filtering-events)
-    * [Defining new options](#Defining-new-options)
-    * [Defining new commands](#Defining-new-commands)
-    * [UI implementation](#UI-implementation)
+    * [The event handling machinery](#the-event-handling-machinery)
+    * [Method "filtering" events](#method-filtering-events)
+    * [Defining new options](#defining-new-options)
+    * [Defining new commands](#defining-new-commands)
+    * [UI implementation](#ui-implementation)
 
 
 # User experience
