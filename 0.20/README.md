@@ -5,11 +5,11 @@ FA'Next 0.20 includes the following improvements:
 
 - encryption support, including all FreeArc options (-p -hp -kf -op -okf -ae) and algorithms (aes, blowfish, serpent, twofish, aes-128, aes/cfb, aes+serpent...)
 
-- large part of program was rewritten in Lua and is now shipped in the source form. Compared to FA'Next 0.11, amount of Lua code was increased from 500 to 3000 lines and now is a third of entire program size. Overall, C++ code now handles only low-end boring details (back-end), while Lua code handles all interaction with user (UI, cmdline/inifile processing). Lua 5.3.4, Penlight 1.4.1 and LuaFileSystem 1.6.3 were incorporated into the executable.
+- large part of program was rewritten in Lua and now shipped in the source form. Compared to FA'Next 0.11, amount of Lua code was increased from 500 to 3000 lines and now it's a third of entire program size. Overall, C++ code now handles only boring low-end details (back-end), while Lua code handles all interaction with user (UI, cmdline/inifile processing, compression and encryption methods management). Lua 5.3.4, Penlight 1.4.1 and LuaFileSystem 1.6.3 were incorporated into the executable. For the rest of us, this means that we can add new features just by dropping corresponding Lua scripts, provided by 3rd-party developers, into the program directory.
 
 - UI/logging got the full Unicode support, display pretty the same information as FreeArc, and implements all features of the `-di` option
 
-- compression methods are automatically limited to the RAM size, options -lc/-ld allows to further tune the RAM usage. Default settings is `-lc75% -ld1600m` so archives made with default `-ld` setting may have problems with extraction on 32-bit systems.
+- compression methods are automatically limited to the RAM size, options -lc/-ld allows to further tune the RAM usage. Default settings for compression commands is `-lc75% -ld1600m`, so archives made with default `-ld` setting may encounter problems with extraction on 32-bit systems.
 
 - 64-bit versions of arc*.sfx modules, unarc.exe and unarc.dll
 
