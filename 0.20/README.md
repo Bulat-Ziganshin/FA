@@ -291,9 +291,9 @@ A short summary of the built-in modules (in the order of loading):
 ## New services provided by the C++ code to the Lua code
 
 Changes in the built-in libraries:
-- Lua itself was updated to latest version 5.3.4
-- added LuaFileSystem 1.6.3 that provides filesystem operations absent in the Lua itself
-- added Penlight 1.4.1 that is similar to the Python built-in library
+- Lua itself was updated to latest version [5.3.4](https://www.lua.org/manual/5.3/)
+- added [LuaFileSystem 1.6.3](http://keplerproject.github.io/luafilesystem/manual.html) that provides filesystem operations absent in the Lua itself
+- added [Penlight 1.4.1](http://stevedonovan.github.io/Penlight/api/index.html) that is similar to the Python built-in library
 
 The filesystem operations, provided by all these libraries, aren't Unicode-aware on Windows - instead they use filenames encoded by ANSI codepage. So, we added Unicode/UNC/LongName-aware operations:
 - File.open(filename,mode) - replaces io.open
