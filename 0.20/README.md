@@ -97,7 +97,7 @@ Options -n/-x now support listfiles: `-x@excluded.lst`.
 
 On the start, FA'Next reads contents of all `fa-*.ini` files in the executable directory and applies them in the same way as `fa.ini`. At the same time, all the `fa-*.lua` files are executed as Lua scripts, so you can you use either Lua files or Lua sections in ini files to define additional commands, options, event handlers and so on. `-cfg-` option disables processing of these files (as well as processing of `fa.ini` file and `FA_CFG` environment variable). Note that on Windows, this feature will work only if the executable directory doesn't have Unicode chars in the pathname.
 
-All options now are parsed by the Lua code and most options are consumed by the Lua code. You can add new options and commands and modify existing ones by dropping Lua scripts into the executable directory. The entire cmdline/inifile parsing is implemented in Lua (main procedure is ParseCommandLine() in file Cmdline.lua), so you can modify it too.
+All options now are parsed by the Lua code and most options are consumed by the Lua code. You can add new options and commands and modify existing ones by dropping Lua scripts into the executable directory. The entire cmdline/inifile parsing is implemented in Lua (main procedure is ParseCommandLine() in file [Cmdline.lua](Cmdline.lua)), so you can modify it too.
 
 
 ## .arc archive format
@@ -147,7 +147,7 @@ Finally, passwords are encrypted using PKCS5#2 algorithm. Number of algorithm it
 
 Encryption algorithms can be chained similarly to TrueCrypt, f.e. "--encryption=aes+serpent/cfb+blowfish", or even "--encryption=aes+aes" which essentially increases key size to 2*256 bits.
 
-The entire encryption management is implemented in Lua (file Encryption.lua), so you can further improve it. Only low-level routines, performing actual data encryption, are in C++.
+The entire encryption management is implemented in Lua (file [Encryption.lua](Encryption.lua)), so you can further improve it. Only low-level routines, performing actual data encryption, are in C++.
 
 
 ## Lizard and CELS compression
@@ -259,7 +259,7 @@ F.e., log of the previous operation:
 10492: All OK
 ```
 
-The whole UI/logging is now implemented in Lua (file UI.lua), so you can further modify it to tailor your needs.
+The whole UI/logging is now implemented in Lua (file [UI.lua](UI.lua)), so you can further modify it to tailor your needs.
 
 
 # Lua support
@@ -272,7 +272,7 @@ New Lua functionality can be split into 3 groups:
 
 ## Program startup
 
-At the program start, FA'Next creates a single Lua state, loads into this state built-in libraries, and then executes built-in Lua scripts. The rest of configfile/cmdline processing is implemented in these scripts, in particular ParseCommandLine() function that is called by the C++ code to parse command line and config files, and supplementary functions in Cmdline.lua called by ParseCommandLine().
+At the program start, FA'Next creates a single Lua state, loads into this state built-in libraries, and then executes built-in Lua scripts. The rest of configfile/cmdline processing is implemented in these scripts, in particular ParseCommandLine() function that is called by the C++ code to parse command line and config files, and supplementary functions in [Cmdline.lua](Cmdline.lua) called by ParseCommandLine().
 
 The built-in ParseCommandLine() loads all `fa-*.ini` and executes all `fa-*.lua` files in the executable directory, unless `-cfg-` option was given. You can use these files to modify existing behavior or add new one. It can be implemented by defining new commands, options, event handlers, redefining existing ones and even redefining functions defined by the built-in Lua code.
 
@@ -281,14 +281,14 @@ If the executable directory contains `fa_init.lua` file, this file is executed i
 Since the only one Lua instance exists, all calls to Lua code from different C++ threads are serialized. You can use global Lua variables to keep state between the calls (that is used a lot by the built-in Lua code).
 
 A short summary of the built-in modules (in the order of loading):
-- Startup.lua: should be loaded first. Imports Penlight, defines extra utility functions and Unicode-aware file operations, provides the event handling machinery and defines most of the built-in events
-- OptionParser.lua: provides the option parsing and file-filtering machinery
-- Cmdline.lua: parses command line and config files, in particular executes command/option handlers as necessary
-- Compression.lua: provides the compression method string and compression groups handling machinery, implements most compression-related options
-- CompressionMethod.lua: implements options `-m` and `-dm` and parses the `[Compression methods]` config file section defining rules for handling these options
-- Encryption.lua: provides the encryption method handling machinery and implements encryption-related options
-- Options.lua: implements all remaining options, including C++ ones
-- UI.lua: defines console UI, logging, profiling and implements corresponding options, mainly `-di`
+- [Startup.lua](Startup.lua): should be loaded first. Imports Penlight, defines extra utility functions and Unicode-aware file operations, provides the event handling machinery and defines most of the built-in events
+- [OptionParser.lua](OptionParser.lua): provides the option parsing and file-filtering machinery
+- [Cmdline.lua](Cmdline.lua): parses command line and config files, in particular executes command/option handlers as necessary
+- [Compression.lua](Compression.lua): provides the compression method string and compression groups handling machinery, implements most compression-related options
+- [CompressionMethod.lua](CompressionMethod.lua): implements options `-m` and `-dm` and parses the `[Compression methods]` config file section defining rules for handling these options
+- [Encryption.lua](Encryption.lua): provides the encryption method handling machinery and implements encryption-related options
+- [Options.lua](Options.lua): implements all remaining options, including C++ ones
+- [UI.lua](UI.lua): defines console UI, logging, profiling and implements corresponding options, mainly `-di`
 
 
 ## Services provided by the C++ code to the Lua code
@@ -397,10 +397,10 @@ Remaining `command` fields represent current values of the following options:
 
 WIP:
 - new variables
-- new utility functions defined in Startup.lua
+- new utility functions defined in [Startup.lua](Startup.lua)
   - search_config_file, read_binary_file, read_text_file
-- new compression-related functions defined in Compression.lua
-- new encryption-related functions defined in Encryption.lua
+- new compression-related functions defined in [Compression.lua](Compression.lua)
+- new encryption-related functions defined in [Encryption.lua](Encryption.lua)
 
 
 ## Services provided by the Lua code to the program
@@ -412,11 +412,11 @@ The main service now implemented in Lua is `ParseCommandLine()` - it receives fr
 
 At the return from this function, the program is prepared to execute the command.
 
-Another new service is UI (implemented by UI.lua). Lua code displays all the information user see on the screen, as well as dumps its "hard copy" to the logfile.
+Another new service is UI (implemented by [UI.lua](UI.lua)). Lua code displays all the information user see on the screen, as well as dumps its "hard copy" to the logfile.
 
 Finally, every compression method that is going to be used for compression/extraction or displayed, is "filtered" through the Lua functions that can modify it. This is used by the following modules:
-- Encryption.lua adds encryption algorithm to the compression method and generates encryption keys
-- Compression.lua limits memory usage according to the -lc/-ld options. `-lc` handler also "reduces" compression method if its blocksize/dictionary is larger than the solid block size.
+- [Encryption.lua](Encryption.lua) adds encryption algorithm to the compression method and generates encryption keys
+- [Compression.lua](Compression.lua) limits memory usage according to the -lc/-ld options. `-lc` handler also "reduces" compression method if its blocksize/dictionary is larger than the solid block size.
 
 
 ### The event handling machinery
@@ -460,7 +460,7 @@ Normal priority handler:  second run
 The full list of events defined in the built-in code:
 - ProgramStart, CommandStart, ArchiveStart, SubCommandStart - called from the C++ code at the program start, command start, archive start, and sub-command start (f.e. "fa a archive -t" executes subcommand "t"). Now, the first 3 events are executed at the same time, but in the future FA'Next versions, single program invocation will be able to execute multiple commands and single command will be able to process multiple archives.
 - ProgramDone, CommandDone, ArchiveDone, SubCommandDone - called once corresponding processing was finished. These and preceding events doesn't carry any parameters - use global Lua variables, especially `command.*, optvalue.* and archive.*` to get info about the current state.
-- CompressionStart/CompressionDone and ExtractionStart/ExtractionDone called around main stage of execution. These events correspond to start and end of displaying the compress/extract progress indicator line. See UI.lua for their parameters.
+- CompressionStart/CompressionDone and ExtractionStart/ExtractionDone called around main stage of execution. These events correspond to start and end of displaying the compress/extract progress indicator line. See [UI.lua](UI.lua) for their parameters.
 - Warning(msg) and Error(msg) - called when program encountered a recoverable and unrecoverable problem, correspondingly
 - RawCmdline and Cmdline - a way to define new commands (see below)
 - PreparseOption, Option and PostOption - a way to define new options (see below)
@@ -507,7 +507,7 @@ I added a highly experimental way to define new commands. Actually, you can do i
 - handling `RawCmdline` event. The handler function gets an `argv` list and should return negative answer (false/nil) if command should be further processed and positive answer otherwise (in this case `ParseCommandLine()` immediately returns). It can modify the `argv` list although it can't just replace it with a different table. It's called prior to any command line processing, allowing one to define "raw" commands that doesn't use existing option definitions, or preprocess the command line prior to option handling.
 - handling `Cmdline` event. The handler function should read command/options from the usual global variables and can modify them. Return code is handled in the same way. It is called after all config-file/option parsing, but before the option post-processing.
 
-Built-in `Options.lua` employs this feature to implement a few new commands, more for teaching purposes rather than something really useful:
+Built-in [Options.lua](Options.lua) employs this feature to implement a few new commands, more for teaching purposes rather than something really useful:
 - `fa run script [arguments...]` executes the Lua script, passing arguments in the global table arg
 - `fa run` executes script from stdin
 - `fa debug` starts Lua built-in debugging REPL
@@ -517,7 +517,7 @@ Built-in `Options.lua` employs this feature to implement a few new commands, mor
 
 ### UI implementation
 
-UI implementation uses the following resources:
+[UI implementation](UI.lua) uses the following resources:
 - usual events such as `onArchiveStart` used to inform user about the command progress. Event handlers are labeled 'UI' allowing user code to remove them
 - `archive.*`, `command.*` and `optvalue.*` fields provide information about archive being processed and command being executed
 - uiTransientMessage(msg), uiProgress(state), uiAskOverwrite(outname), uiWarning(message...), uiError(message...), uiProfiler(label) are Lua functions called from the C++ code to handle UI-specific events. They aren't defined using the event machinery since each one hardly need more than one handler function.
