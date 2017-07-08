@@ -1,130 +1,3 @@
-
-CELS расшифровывается как Compression/Encryption Library Standard (стандарт для библиотек сжатия/шифрования) и является улучшенной версией CLS.
-
-CELS - это одновременно стандартное API для таких библиотек (кодеков) и фреймворк, обеспечивающий коммуникацию между программами, которым требуется сжатие, шифрование, хеширование и другие сервисы, и кодеками, реализующими эти сервисы. CELS реализован на общем подмножестве ANSI C99 и C++98, и использует для коммуникации только C ABI, что делает его в высшей степени переносимым.
-
-
-## Архитектура
-
-CELS основан на идее предоставления фреймворком всех своих сервисов программе одной универсальной функцией `Cels()`, и аналогично - предоставления кодеком всех своих сервисов фреймворку одной-единственной функцией `CelsMain()`. Их определения:
-
-```C
-CelsResult Cels (const void* method, int service, void* inbuf, CelsNum insize, void* outbuf, CelsNum outsize, void* ud, CelsCallback* cb);
-CelsResult CelsMain (void* self, int service, void* inbuf, CelsNum insize, void* outbuf, CelsNum outsize, void* ud, CelsCallback* cb);
-
-typedef CelsResult CelsCallback (void* self, int service, void* inbuf, CelsNum insize, void* outbuf, CelsNum outsize, void* ud, CelsCallback* cb);
-typedef long long CelsResult, CelsNum;
-```
-
-Как видите, эти определения очень похожи и это не случайно - главная функциональность `Cels()` состоит в том, чтобы отыскать по аргументу `method` реализующий его кодек, и вызвать `CelsMain()` этого кодека, передав ему неизменными все остальные аргументы.
-
-Таким образом, интерпретация этих аргументов почти всецело определяется самим кодеком. `Service` - это запрашиваемая у кодека функция, от неё зависит интерпретация остальных аргументов. Обычно пара `(inbuf,insize)` используется для описания входного буфера/данных, `(outbuf,outsize)` - выходного буфера/данных, `cb/ud` - колбека и его первого аргумента.
-
-Колбек позволяет кодеку, в свою очередь, запросить какие-то сервисы у приложения (например, прочитать входные данные), и имеет точно такой же набор аргументов, включая колбек следующего уровня. Это позволяет строить сколь угодно сложные сценарии взаимодействия приложения и кодека, включая вложенные вызовы колбеков произвольной глубины.
-
-Количество аргументов у функций Cels/CelsMain/CelsCallback сделано достаточно большим для того, чтобы покрыть нужды 99% возможных сервисов. А немногим оставшимся можно передавать дополнительные данные либо как ответы на колбек, либо в структурах, адресуемых inbuf/outbuf.
-
-Мы можем подвести итоги: CELS это 1) небольшой коммуникационный фреймворк, умеющий загружать из DLL и регистрировать кодеки, и передавать каждое обращение к Cels() соответствующему кодеку и 2) основанный на нём конкретный API, поддерживаемый FreeArc, и позволяющий реализовать все возможности, доступные его внутренним кодекам. Надо ли говорить, что вы можете использовать фреймворк и API даже по отдельности.
-
-Интересно заметить, что приложения должны линковаться с `CELS.cpp`, поскольку в нём реализован фреймворк. В то же время кодекам этого не нужно - они не используют фреймворк, наоборот это фреймворк использует их, и в `CELS.cpp` нет никакой используемой ими функциональности. API же, который используют и те, и другие, целиком описан в `CELS.h`.
-
-Итак, что нам даёт "архитектура одной функции"? Ну, помимо того, что она снижает эффективность и затрудняет программирование.
-
-РАСШИРЯЕМОСТЬ: для добавления новой функции достаточно обновить лишь кодек и использующее его приложение. При этом никаких изменений в фреймворке и остальных кодеках/приложениях не требуется.
-
-СОВМЕСТИМОСТЬ: старые приложения можно использовать с новыми кодеками и наоборот. Более того, возможна "мозаичная совместимость" - когда каждый кодек/приложение реализует свой набор расширений и всё это работает вместе. Ключом к обеспечению совместимости явлется способность кодеков и приложений обрабатывать ответ CELS_ERROR_NOT_IMPLEMENTED и либо игнорировать его для опциональных сервисов, либо переключаться на использование более старого/простого сервиса.
-
-ПЕРЕНОСИМОСТЬ: для поддержки нового языка программирования, достаточно подключить в нём одну-единственную функцию `Cels()` и перевести на этот язык определения констант `CELS_*` из `CELS.h`. Вотысё! Опционально, можно создать высокоуровневый API, упрощающий создание приложений/кодеков на этом языке:
-
-- отдельные функции для каждого сервиса, реализующие проверку типов и подстановку нужных констант в вызовы `Cels()`. Большинство функций, описанных в этом документе, являются как раз частью такого биндинга для C/C++, включённого в сам CELS. Например, вызов `CelsCompress(method,ud,cb)` транслируется в `Cels(method,CELS_COMPRESS,0,0,0,0,ud,cb)`. Заметьте, что даже такой простой биндинг избавляет нас от основного недостатка "архитектуры одной функции" - неудобства вызова отдельных сервисов через общую функцию `Cels()`.
-
-- проверку значения, возвращаемого сервисами/колбеками, и замену CELS_ERROR_NOT_IMPLEMENTED либо на значение по умолчанию, либо на вызов другого сервиса. В нынешней поставке CELS есть одна пара функций такого рода, которые можно рассматривать как штатное расширение фреймворка, работающее только через официальный API, и не использующее детали реализации CELS - это функции `CelsCompressMem` и `CelsDecompressMem`, которые при отсутствии в кодеке поддержки (ра)сжатия в памяти эмулируют его через поточное (ра)сжатие.
-
-- возбуждение исключений при получении прочих кодов ошибок
-
-- использование нативных для языка лямбд вместо низкоуровневых колбеков
-
-- и наконец заключение всего API кодека/колбека в класс для наиболее удобного использования, подобно тому как это было сделано в CLS
-
-
-
-
-
-CELS stands for Compression/Encryption Library Standard and is an enhanced version of CLS.
-
-CELS is an API and framework that provides communication between applications requiring compression, encryption, hashing and other services, and codecs implementing these services. CELS is implemented in the common subset of ANSI C99 and C++98, and uses for communications only basic C ABI, making the framework highly portable.
-
-
-## Architecture
-
-CELS is based on the idea of providing a single universal function `CelsMain` to represent a whole codec functionality, and likewise, providing a single universal function `Cels` to represent the entire framework functionality to an application. These functions look very similar:
-
-```C
-CelsResult Cels (const void* method, int service, void* inbuf, CelsNum insize, void* outbuf, CelsNum outsize, void* ud, CelsCallback* cb);
-CelsResult CelsMain (void* self, int service, void* inbuf, CelsNum insize, void* outbuf, CelsNum outsize, void* ud, CelsCallback* cb);
-
-typedef CelsResult CelsCallback (void* self, int service, void* inbuf, CelsNum insize, void* outbuf, CelsNum outsize, void* ud, CelsCallback* cb);
-typedef long long CelsResult, CelsNum;
-```
-
-The similarity is intentional - the `Cels` provides very little functionality besides finding a right codec and passing most of the parameters intact to the codec's `CelsMain`. Thus, interpretation of parameters is almost entirely defined by the codec.
-
-This emphasizes my point that CELS is a combination of compression API that codecs and applications are expected to follow, and
-a little communication framework binding codecs and application together. You can even use the API without the framework or vice versa.
-
-As the framework, CELS provides only a little functionality (details are in section WIP):
-- register statically-linked codecs, find and load dynamic libraries containing external CELS codecs
-- call each codec first time, allowing it to initialize itself and grab necessary OS resources
-- route each `Cels` call to `CelsMain` of appropriate codec, basing choice either on a string method name or on a binary method structure
-- at the end of work, call each codec last time, allowing it to free OS resources grabbed
-- finally, release all codec DLLs
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Architecture
 
 CELS stands for Compression/Encryption Library Standard and is an enhanced version of CLS.
@@ -705,7 +578,8 @@ The API consists of four services that callback should implement:
 
 Note that all services may be invoked in parallel. It's only guaranteed that CELS_RECEIVE_FILLED_INBUF calls will be serialized, as well as CELS_SEND_FILLED_OUTBUF (since they should follow the data order).
 
-More details are available at WIP (encode.ru).
+More details are available at:
+- [implementation](https://encode.ru/threads/2718-Standard-compression-library-API?p=51928&viewfull=1#post51928)
 
 
 
@@ -1314,3 +1188,5 @@ CELS_UNPARSE service called to convert codec instance to a method string.
 ### Rules for choosing codes for new services
 ### Buffer-sharing API
 
+More details are available at:
+- [implementation](https://encode.ru/threads/2718-Standard-compression-library-API?p=51928&viewfull=1#post51928)
