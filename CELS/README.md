@@ -15,10 +15,10 @@
   * [Providing smooth progress indicator](#providing-smooth-progress-indicator)
   * [Buffer-sharing API](#buffer-sharing-api)
 * [Codec development](#codec-development)
-  * [Minimal example: streaming compression](#minimal-example-streaming-compression)
+  * [Minimal example: streaming compression](#minimal-example-streaming-compression2)
   * [Registering codec](#registering-codec)
   * [Memory buffer compression and mixed-mode compression](#memory-buffer-compression-and-mixed-mode-compression)
-  * [Providing smooth progress indicator](#providing-smooth-progress-indicator)
+  * [Providing smooth progress indicator](#providing-smooth-progress-indicator2)
   * [Getting method parameters](#getting-method-parameters)
   * [Parsing a method string](#parsing-a-method-string)
   * [Unparsing a method structure](#unparsing-a-method-structure)
@@ -26,7 +26,7 @@
   * [Using the parsed method structure](#using-the-parsed-method-structure)
   * [Setting method parameters](#setting-method-parameters)
   * [Meaning of method parameters](#meaning-of-method-parameters)
-  * [Caching](#caching)
+  * [Caching](#caching2)
   * [Registering codecs: the full API](#registering-codecs-the-full-api)
     * [Module-level services](#module-level-services)
     * [Codec-level services](#codec-level-services)
@@ -626,6 +626,8 @@ More details are available at:
 Our example codec simply copies input data to the output intact.
 
 
+<a name="minimal-example-streaming-compression2"/>
+
 ### Minimal example: streaming compression
 
 Minimal complete example (provided in easy_codec.cpp):
@@ -742,6 +744,8 @@ CelsResult __cdecl CelsMain (void* self, int service, void* inbuf, CelsNum insiz
     }
 }
 ```
+
+<a name="providing-smooth-progress-indicator2"/>
 
 ### Providing smooth progress indicator
 
@@ -1035,6 +1039,8 @@ CelsResult __cdecl CelsMain (void* self, int service, void* inbuf, CelsNum insiz
 ### Meaning of method parameters
 
 to do:
+
+<a name="caching2"/>
 
 ### Caching
 
