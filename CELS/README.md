@@ -1,3 +1,41 @@
+* Architecture
+* Application usage
+  * Minimal example: streaming compression
+  * Passing userdata to the callback
+  * Memory buffer compression
+  * Mixed-mode compression
+  * Formatting a method string
+  * Generic method parameters
+    * Querying method parameters
+    * Modification of method parameters
+    * Full list of supported parameters
+  * Low-level access to parsed method
+  * Caching
+  * Loading and registering codecs
+  * Providing smooth progress indicator
+  * Buffer-sharing API
+* Codec development
+  * Minimal example: streaming compression
+  * Registering codec
+  * Memory buffer compression and mixed-mode compression
+  * Providing smooth progress indicator
+  * Getting method parameters
+  * Parsing a method string
+  * Unparsing a method structure
+  * Default implementation of (un)parsing services
+  * Using the parsed method structure
+  * Setting method parameters
+  * Meaning of method parameters
+  * Caching
+  * Registering codecs: the full API
+    * Module-level services
+    * Codec-level services
+    * Instance-level services
+  * The Cels() algorithm
+  * Rules for choosing codes for new services
+  * Buffer-sharing API
+
+
 ## Architecture
 
 CELS stands for Compression/Encryption Library Standard and is an enhanced version of CLS.
