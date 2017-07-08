@@ -1,39 +1,39 @@
-* Architecture
-* Application usage
-  * Minimal example: streaming compression
-  * Passing userdata to the callback
-  * Memory buffer compression
-  * Mixed-mode compression
-  * Formatting a method string
-  * Generic method parameters
-    * Querying method parameters
-    * Modification of method parameters
-    * Full list of supported parameters
-  * Low-level access to parsed method
-  * Caching
-  * Loading and registering codecs
-  * Providing smooth progress indicator
-  * Buffer-sharing API
-* Codec development
-  * Minimal example: streaming compression
-  * Registering codec
-  * Memory buffer compression and mixed-mode compression
-  * Providing smooth progress indicator
-  * Getting method parameters
-  * Parsing a method string
-  * Unparsing a method structure
-  * Default implementation of (un)parsing services
-  * Using the parsed method structure
-  * Setting method parameters
-  * Meaning of method parameters
-  * Caching
-  * Registering codecs: the full API
-    * Module-level services
-    * Codec-level services
-    * Instance-level services
-  * The Cels() algorithm
-  * Rules for choosing codes for new services
-  * Buffer-sharing API
+* [Architecture](#architecture)
+* [Application usage](#application-usage)
+  * [Minimal example: streaming compression](#minimal-example-streaming-compression)
+  * [Passing userdata to the callback](#passing-userdata-to-the-callback)
+  * [Memory buffer compression](#memory-buffer-compression)
+  * [Mixed-mode compression](#mixed-mode-compression)
+  * [Formatting a method string](#formatting-a-method-string)
+  * [Generic method parameters](#generic-method-parameters)
+    * [Querying method parameters](#querying-method-parameters)
+    * [Modification of method parameters](#modification-of-method-parameters)
+    * [Full list of supported parameters](#full-list-of-supported-parameters)
+  * [Low-level access to parsed method](#low-level-access-to-parsed-method)
+  * [Caching](#caching)
+  * [Loading and registering codecs](#loading-and-registering-codecs)
+  * [Providing smooth progress indicator](#providing-smooth-progress-indicator)
+  * [Buffer-sharing API](#buffer-sharing-api)
+* [Codec development](#codec-development)
+  * [Minimal example: streaming compression](#minimal-example-streaming-compression)
+  * [Registering codec](#registering-codec)
+  * [Memory buffer compression and mixed-mode compression](#memory-buffer-compression-and-mixed-mode-compression)
+  * [Providing smooth progress indicator](#providing-smooth-progress-indicator)
+  * [Getting method parameters](#getting-method-parameters)
+  * [Parsing a method string](#parsing-a-method-string)
+  * [Unparsing a method structure](#unparsing-a-method-structure)
+  * [Default implementation of (un)parsing services](#default-implementation-of-unparsing-services)
+  * [Using the parsed method structure](#using-the-parsed-method-structure)
+  * [Setting method parameters](#setting-method-parameters)
+  * [Meaning of method parameters](#meaning-of-method-parameters)
+  * [Caching](#caching)
+  * [Registering codecs: the full API](#registering-codecs-the-full-api)
+    * [Module-level services](#module-level-services)
+    * [Codec-level services](#codec-level-services)
+    * [Instance-level services](#instance-level-services)
+  * [The Cels() algorithm](#the-cels-algorithm)
+  * [Rules for choosing codes for new services](#rules-for-choosing-codes-for-new-services)
+  * [Buffer-sharing API](#buffer-sharing-api)
 
 
 ## Architecture
