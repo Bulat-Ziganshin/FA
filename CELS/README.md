@@ -34,6 +34,7 @@
   * [The Cels() algorithm](#the-cels-algorithm)
   * [Rules for choosing codes for new services](#rules-for-choosing-codes-for-new-services)
   * [Buffer-sharing API](#buffer-sharing-api)
+  * [Parameter parsing API (under development)](#parameter-parsing-api)
 
 
 ## Architecture
@@ -1234,3 +1235,61 @@ CELS_UNPARSE service called to convert codec instance to a method string.
 
 More details are available at:
 - [implementation](https://encode.ru/threads/2718-Standard-compression-library-API?p=51928&viewfull=1#post51928)
+
+
+<a name="#parameter-parsing-api"/>
+
+### Parameter parsing API (under development)
+
+If your codec is implemented in C++, it's possible to describe parameters in pure declarative way, and delegate to the CELS code duties of parsing, validating and unparsing parameters. The parameters description looks like:
+
+```C++
+CelsParameters LzmaParams = {
+    CelsDefaultParameter("mf", CelsGuiParameter("0436", "Match finder", "Influences compression ratio"),
+                               CelsEnumParameter<std::string>("ht4", {"hc4","ht4","bt4"}, &LzmaCels::matchFinder)),
+    CelsDefaultParameter("l",  CelsGuiParameter("0437", "Level", "Higher level increases compression ratio"),
+                               CelsNumericParameter<int>(5, 1, 9, 1, &LzmaCels::level)),
+    CelsDefaultParameter("d",  CelsGuiParameter("0438", "Dictionary", "Larger dictionary increases compression ratio"),
+                               CelsMemoryParameter<uint64_t>(1<<23, 1<<10, 1<<31, 1.5, &LzmaCels::dictionary))
+    CelsParameter       ("mr", CelsGuiParameter("0439", "Max ratio", "Data are stored uncompressed if ratio is higher than allowed"),
+                               CelsNumericParameter<double>(1, 0, 1, 0, &LzmaCels::maxRatio)),
+    CelsParameterProfile("max",   "l9:mf=bt4:d64m"),
+    CelsParameterProfile("ultra", {"9","bt4","128m"}),
+};
+```
+
+This description can be used to hook up the CelsMain() processing for LzmaCodec:
+
+```C++
+CelsResult __cdecl LzmaCelsMain (void* self, int service, CelsNum subservice, void* inbuf, CelsNum insize, void* outbuf, CelsNum outsize, void* ud, CelsCallback* cb)
+{
+    CelsResult result = CelsAutoParser<LzmaCodec>(LzmaParams,LzmaCelsMain, self, service,subservice, inbuf,insize, outbuf,outsize, ud,cb);
+    if (result!=CELS_CONTINUE_PROCESSING)  return result;
+    ...
+}
+```
+
+Once CelsAutoParser() receives CELS_PARSE request, it calls LzmaCelsMain() back to create default LzmaCodec instance and then tries to parse each parameter in order. F.e. while parsing "lzma:l9:mf=bt4:d64m" the "l9" string is parsed by passing "9" to the CelsIntegerParameter instance, and "mf=bt4" by passing "bt4" to CelsEnumParameter instance. Overall, it tries to skip "prefix=" or "prefix" from every parameter description and on success parse the rest of parameter with provided parser. If none parser succeeded, it checks again all parsers described with CelsDefaultParameter, this time without skipping prefix with parameter name. F.e. parsing of "lzma:9:bt4:64m" will return the same result as parsing of "lzma:l9:mf=bt4:d64m", since all three parameters will fail parsing in the first stage, but will find successful parser at the second stage.
+
+Parameter profiles describe shortcuts parsed as corresponding options in the second parameter.
+
+`CelsGuiParameter("0436", "Match finder", "Influences compression ratio")` describes title, tooltip and their translation id for specifying parameter in GUI programs.
+
+Parameter description may have one of the following types:
+- `CelsEnumParameter<TYPE>(DEFAULT_VALUE, {VALUE1, VALUE2...}, &memberVariable)` describes parameter that may be only one of the specified values
+- `CelsNumericParameter<TYPE>(DEFAULT_VALUE, MIN_VALUE, MAX_VALUE, STEP, &memberVariable)` describes parameter having any value in given range with given step
+- `CelsMemoryParameter<TYPE>(DEFAULT_VALUE, MIN_VALUE, MAX_VALUE, STEP, &memberVariable)` describes parameter that can be any power of 2 in given range or intermediate value: for STEP=1 values are like "128,256,512..."; for STEP=1.5 values are like "128,192,256,384,512..."; for STEP=1.25 values are like "128,160,192,224,256,320,384..." and so on
+- custom parameter classes, derived from CelsParameterDescription, are possible
+
+`memberVariable` is a pointer to structure field of the specified TYPE holding this parameter value. Once parsing is done, these variables are filled by parameter values and can be used to control compression/decompression code. CELS_UNPARSE service uses their values to rebuild the method string in the canonical way.
+
+***
+
+GUI applications can use the following API to edit codec parameters:
+- int total=GetNumberOfParameters(), id=0..total-1 for the remaining routines
+- str=GetParameterTitle(id), str=GetParameterTooltip(id), str=GetParameterTranslationID(id) for displaying title/tooltip in GUI
+- str=GetParameterValue(id), int errcode=SetParameterValue(id,str), str=GetParameterDefaultValue(id) for modification of parameter value
+- int=GetParameterType(id) returns of of the following:
+  - CELS_STRING_PARAMETER: no other services are provided
+  - CELS_ENUM_PARAMETER: int values=GetTotalValues(id), str=GetValueNumber(id,value) where value=0..values-1
+  - CELS_NUMERIC_PARAMETER: str=GetMinValue(id), str=GetMaxValue(id), str=GetStep(id) where strings may represent integer or FP values
