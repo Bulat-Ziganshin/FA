@@ -96,7 +96,7 @@ Notes:
 ```ProtoBuf
 syntax = "proto3";
 
-message Filter 
+message Filter
 {
     required int64 size = 1;   // default = 42
     optional string name = 2;  // default = "DEFAULT NAME"
@@ -118,10 +118,35 @@ struct Filter
     size_t num_values = 0;
     size_t num_subnames = 0;
 
-    uint has_size : 1 = 0;
-    uint has_name : 1 = 0;
+    bool has_size = false;
+    bool has_name = false;
 
-    int serialize(void** buf, size_t* size);
-    int deserialize(void* buf, size_t size);
+    void ProtoBufEncode(ProtoBufEncoder &pb);
+    void ProtoBufDecode(ProtoBufDecoder &pb);
 }
+
+
+void Filter::ProtoBufDecode(ProtoBufDecoder &pb)
+{
+    while(pb.get_next_field())
+    {
+        switch(pb.field_num)
+        {
+            case 1: pb.parse_int(&size, &has_size); break;
+            case 2: pb.parse_string(&name, &has_name); break;
+            case 3: pb.parse_repeated_int(&values, &num_values); break;
+            case 4: pb.parse_repeated_string(&subnames, &num_subnames); break;
+            default: pb.skip_field();
+        }
+    }
+}
+```
+
+with application's usage as:
+
+```C
+ProtoBufDecoder pb(buf,size);
+filter.ProtoBufDecode(pb);
+if(pb.error)
+    abort("Internal error: " + pb.error_message());
 ```
