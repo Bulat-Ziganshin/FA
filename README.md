@@ -1,6 +1,9 @@
-- [WIP: Compression algorithms](Compression-algorithms.md)
-- [Extending FA with Lua](Lua-code.md)
-- [FreeArc archive format](FreeArc-archive-format.md)
+- [WIP: FreeArcLib API](FreeArcLib-API.md)
+- [Extending FA with Lua](Lua-code.md)  
+
+Archive format:
+  - [Existing FreeArc archive format (.arc)](FreeArc-archive-format.md)
+  - [WIP: Compression algorithms](Compression-algorithms.md)
   - [How to improve the archive format](How-to-improve-the-archive-format.md)
   - [WIP: new archive format](New-archive-format.md)
   - [WIP: recovery record](Recovery-record.md)
