@@ -38,7 +38,7 @@ struct ProtoBufDecoder
     }
 
     template <typename IntegerType>
-    void parse_integer_field_with_sign(int field_type, IntegerType *field, bool *has_field)
+    void parse_zigzag_integer_field(int field_type, IntegerType *field, bool *has_field)
     {
         uint64_t value = parse_integer_value(field_type);
 
@@ -47,26 +47,28 @@ struct ProtoBufDecoder
         *has_field = true;
     }
 
-    void parse_string_field(int field_type, std::string *field, bool *has_field)
+    template <typename ByteArrayType>
+    void parse_bytearray_field(int field_type, ByteArrayType *field, bool *has_field)
     {
-        *field = parse_string_value(field_type);
+        *field = parse_bytearray_value(field_type);
         *has_field = true;
     }
 
-    void parse_repeated_string_field(int field_type, std::vector<std::string> *field)
+    template <typename RepeatedByteArrayType>
+    void parse_repeated_bytearray_field(int field_type, RepeatedByteArrayType *field)
     {
-        field->push_back( parse_string_value(field_type));
+        field->push_back( parse_bytearray_value(field_type));
     }
 
 
-    std::string parse_string_value(int field_type)
+    std::string_view parse_bytearray_value(int field_type)
     {
         if(field_type != FT_LEN)  {throw ...;}
 
         uint64_t len = read_varint();
         advance_ptr(len);
 
-        return std::string(ptr-len, len);
+        return std::string_view(ptr-len, len);
     }
 
     uint64_t parse_integer_value(int field_type)
@@ -104,6 +106,15 @@ struct ProtoBufDecoder
             ptr++;  shift += 7;
         } while(has_more_bytes);
 
+        return value;
+    }
+
+    template <typename FixedType>
+    static FixedType ReadLE(void* ptr)
+    {
+        // TODO: reverse byte order on big-endians
+        FixedType value;
+        memcpy(&value, ptr, sizeof(value));
         return value;
     }
 }

@@ -23,9 +23,9 @@ void Filter::ProtoBufDecode(ProtoBufDecoder &pb)
         switch(field_num)
         {
             case 1: pb.parse_integer_field( field_type, &size, &has_size); break;
-            case 2: pb.parse_string_field ( field_type, &name, &has_name); break;
+            case 2: pb.parse_bytearray_field( field_type, &name, &has_name); break;
             case 3: pb.parse_repeated_integer_field( field_type, &values); break;
-            case 4: pb.parse_repeated_string_field ( field_type, &subnames); break;
+            case 4: pb.parse_repeated_bytearray_field( field_type, &subnames); break;
             default: pb.skip_field( field_type);
         }
     }
