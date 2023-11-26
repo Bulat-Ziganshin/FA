@@ -3,8 +3,10 @@
 
 void main()
 {
-    ProtoBufDecoder pb(buf,size);
-    filter.ProtoBufDecode(pb);
-    if(pb.error)
-        abort("Internal error: " + pb.error_message());
+    try {
+        ProtoBufDecoder pb(buf,size);
+        filter.ProtoBufDecode(pb);
+    } catch (const std::exception& e) {
+        abort("Internal error: " + e.what());
+    }
 }

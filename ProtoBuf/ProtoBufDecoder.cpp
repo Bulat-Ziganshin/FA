@@ -2,13 +2,12 @@ struct ProtoBufDecoder
 {
     bool get_next_field(int* field_num, int* field_type)
     {
-        if(error || (ptr == buf_end))  return false;
+        if(ptr == buf_end)  return false;
 
         uint64_t number = read_varint();
-        if(error)  return false;
-
         *field_num = (number >> 3);
         *field_type = (number & 7);
+
         return true;
     }
 
@@ -22,11 +21,9 @@ struct ProtoBufDecoder
             advance_ptr(8);
         } else if (field_type == FT_LEN) {
             uint64_t len = read_varint();
-            if(error)                 return;
-            if(buf_end - ptr < len)   {set_error(...); return;}
-            ptr += len;
+            advance_ptr(len);
         } else {
-            set_error(...);
+            throw ...;
         }
     }
 
@@ -35,7 +32,6 @@ struct ProtoBufDecoder
     void parse_integer_field(int field_type, IntegerType *field, bool *has_field)
     {
         uint64_t value = parse_integer_value(field_type);
-        if(error) return;
 
         *field = IntegerType(value);
         *has_field = true;
@@ -45,7 +41,6 @@ struct ProtoBufDecoder
     void parse_integer_field_with_sign(int field_type, IntegerType *field, bool *has_field)
     {
         uint64_t value = parse_integer_value(field_type);
-        if(error) return;
 
         *field = IntegerType(value/2);
         if(value & 1)  *field = IntegerType(-1) - *field;
@@ -55,7 +50,6 @@ struct ProtoBufDecoder
     void parse_string_field(int field_type, char **field, bool *has_field)
     {
         char *s = parse_string_value(field_type);
-        if(error) return;
 
         *field = s;
         *has_field = true;
@@ -64,10 +58,9 @@ struct ProtoBufDecoder
     void parse_repeated_string_field(int field_type, char ***field, size_t *num_values)
     {
         char *s = parse_string_value(field_type);
-        if(error) return;
 
         char **new_array = realloc(*field, (*num_values + 2) * sizeof(char*));
-        if(new_array == nullptr)  {set_error(...); return;}
+        if(new_array == nullptr)  {throw ...;}
 
         new_array[*num_values] = s;
         new_array[*num_values + 1] = nullptr;
@@ -79,18 +72,16 @@ struct ProtoBufDecoder
 
     char* parse_string_value(int field_type)
     {
-        if(field_type != FT_LEN)  {set_error(...); return nullptr;}
+        if(field_type != FT_LEN)  {throw ...;}
+
         uint64_t len = read_varint();
-        if(error)                 return nullptr;
-        if(buf_end - ptr < len)   {set_error(...); return nullptr;}
+        advance_ptr(len);
 
         char *s = malloc(len+1);  // TODO: custom memory allocation
-        if(s == nullptr)  {set_error(...); return nullptr;}
+        if(s == nullptr)  {throw ...;}
 
-        memcpy(s, ptr, len);
+        memcpy(s, ptr-len, len);
         s[len] = 0;
-
-        ptr += len;
         return s;
     }
 
@@ -101,15 +92,16 @@ struct ProtoBufDecoder
         }
 
         if (field_type == FT_FIXED64) {
-            if(buf_end - ptr < 8)  {set_error(...); return 0;}
-            ptr += 8;
-            return *(uint64_t*)(ptr-8);  // TODO: reverse byte order on big-endians
+            advance_ptr(8);
+            return ReadLE<uint64_t>(ptr-8);
         }
 
-        // TODO: parse FT_FIXED32
+        if (field_type == FT_FIXED32) {
+            advance_ptr(4);
+            return ReadLE<uint32_t>(ptr-4);
+        }
 
-        set_error(...);
-        return 0;
+        throw ...;
     }
 
     uint64_t read_varint()
@@ -118,8 +110,8 @@ struct ProtoBufDecoder
         int shift = 0;
 
         do {
-            if(ptr == buf_end)  {set_error(...); return 0;}
-            if(shift >= 64)     {set_error(...); return 0;}
+            if(ptr == buf_end)  {throw ...;}
+            if(shift >= 64)     {throw ...;}
 
             auto has_more_bytes = (*ptr & 128);
             uint64_t byte = (*ptr & 127);
