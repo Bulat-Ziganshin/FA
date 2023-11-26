@@ -50,7 +50,7 @@ So, the minimum archive size will be 2*4 bytes (initial/ending fixed signatures)
 
 ## Ex-directory block
 
-This block may contain any archive meta-information, individual fields/groups are enabled by flags. All flags are placed at the block header, but as a matter of сonvenience, we describe them in corresponding chapters.
+This block may contain any archive meta-information, individual fields/groups are enabled by flags. All flags are placed at the block header, but as a matter of convenience, we describe them in corresponding chapters.
 
 Header flags:
 - none/custom set of archive description fields

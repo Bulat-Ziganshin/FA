@@ -2,7 +2,7 @@ Goals:
 * provide C API to FreeArc functionality, similar to 7z.dll
 * provide C APIs for each stage of command processing
 * make these APIs stable and accessible from any language by using ProtoBuf to serialize all parameters
-* provide alternative low-level C APIs for all these functions with direct access to С structures
+* provide alternative low-level C APIs for all these functions with direct access to C structures
 * may be, provide some extra functionality to 7z.dll:
   * add ProtoBuf interfaces to 7z.dll functions
   * combine FreeArc cmdline processing with 7z.dll archive processing, essentially allowing FreeArc to process any archive type
