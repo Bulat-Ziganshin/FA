@@ -47,42 +47,26 @@ struct ProtoBufDecoder
         *has_field = true;
     }
 
-    void parse_string_field(int field_type, char **field, bool *has_field)
+    void parse_string_field(int field_type, std::string *field, bool *has_field)
     {
-        char *s = parse_string_value(field_type);
-
-        *field = s;
+        *field = parse_string_value(field_type);
         *has_field = true;
     }
 
-    void parse_repeated_string_field(int field_type, char ***field, size_t *num_values)
+    void parse_repeated_string_field(int field_type, std::vector<std::string> *field)
     {
-        char *s = parse_string_value(field_type);
-
-        char **new_array = realloc(*field, (*num_values + 2) * sizeof(char*));
-        if(new_array == nullptr)  {throw ...;}
-
-        new_array[*num_values] = s;
-        new_array[*num_values + 1] = nullptr;
-
-        *field = new_array;
-        *num_values += 1;
+        field->push_back( parse_string_value(field_type));
     }
 
 
-    char* parse_string_value(int field_type)
+    std::string parse_string_value(int field_type)
     {
         if(field_type != FT_LEN)  {throw ...;}
 
         uint64_t len = read_varint();
         advance_ptr(len);
 
-        char *s = malloc(len+1);  // TODO: custom memory allocation
-        if(s == nullptr)  {throw ...;}
-
-        memcpy(s, ptr-len, len);
-        s[len] = 0;
-        return s;
+        return std::string(ptr-len, len);
     }
 
     uint64_t parse_integer_value(int field_type)

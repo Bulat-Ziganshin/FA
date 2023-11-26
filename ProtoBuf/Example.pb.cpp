@@ -3,17 +3,13 @@
 struct Filter
 {
     int64_t size = 42;
-    char* name = "DEFAULT NAME";
-    int64_t* values = nullptr;
-    char** subnames = nullptr;
-
-    size_t num_values = 0;
-    size_t num_subnames = 0;
+    std::string name = "DEFAULT NAME";
+    std::vector<int64_t> values;
+    std::vector<std::string> subnames;
 
     bool has_size = false;
     bool has_name = false;
 
-    void ProtoBufEncode(ProtoBufEncoder &pb);
     void ProtoBufDecode(ProtoBufDecoder &pb);
 }
 
@@ -28,8 +24,8 @@ void Filter::ProtoBufDecode(ProtoBufDecoder &pb)
         {
             case 1: pb.parse_integer_field( field_type, &size, &has_size); break;
             case 2: pb.parse_string_field ( field_type, &name, &has_name); break;
-            case 3: pb.parse_repeated_integer_field( field_type, &values, &num_values); break;
-            case 4: pb.parse_repeated_string_field ( field_type, &subnames, &num_subnames); break;
+            case 3: pb.parse_repeated_integer_field( field_type, &values); break;
+            case 4: pb.parse_repeated_string_field ( field_type, &subnames); break;
             default: pb.skip_field( field_type);
         }
     }
