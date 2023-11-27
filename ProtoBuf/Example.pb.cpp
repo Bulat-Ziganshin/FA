@@ -1,17 +1,21 @@
-// This file should be auto-generated from Example.proto
+// This file will be auto-generated from Example.proto when I grow up
+#include <cstdint>
+#include <string>
+#include <vector>
+
 
 struct Filter
 {
     int64_t size = 42;
-    std::string name = "DEFAULT NAME";
+    std::string_view name = "DEFAULT NAME";
     std::vector<int64_t> values;
-    std::vector<std::string> subnames;
+    std::vector<std::string_view> subnames;
 
     bool has_size = false;
     bool has_name = false;
 
     void ProtoBufDecode(ProtoBufDecoder &pb);
-}
+};
 
 
 void Filter::ProtoBufDecode(ProtoBufDecoder &pb)

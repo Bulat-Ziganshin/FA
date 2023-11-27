@@ -1,12 +1,15 @@
 #include "ProtoBufDecoder.cpp"
 #include "Example.pb.cpp"
 
-void main()
+int main()
 {
     try {
-        ProtoBufDecoder pb(buf,size);
+        Filter filter;
+        ProtoBufDecoder pb("data");
         filter.ProtoBufDecode(pb);
+        printf("Decoding succeed!\n");
     } catch (const std::exception& e) {
-        abort("Internal error: " + e.what());
+        printf("Internal error: %s\n", e.what());
     }
+    return 0;
 }

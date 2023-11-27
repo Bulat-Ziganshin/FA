@@ -1,11 +1,11 @@
-This is minimum memorum implementation of ProtoBuf decoder,
-written specifically for FA'Next and thus supporting only features it may need.
-It's optimized for code size, and current (unfinished) code is only 150 lines long.
-The nearest (and working!) competition is [protozero](https://github.com/mapbox/protozero).
+This is a minimal implementation of ProtoBuf decoder:
+- optimized for code size, the entire decoding library is 200 LOC
+- encoder and compiler for .proto files are planned for the indefinite future
+- the closest competition is [protozero](https://github.com/mapbox/protozero)
 
-Minimal decoder of ProtoBuf messages with planned code generator:
-- [Example.proto](Example.proto) - definition of the serialized structure
-- [Example.pb.cpp](Example.pb.cpp) - auto-generated C++ structure and ProtoBuf decoder for it
+Files:
+- [Example.proto](Example.proto) - ProtoBuf definition of the serialized structure
+- [Example.pb.cpp](Example.pb.cpp) - corresponding C++ structure and ProtoBuf decoder for it
 - [ProtoBufDecoder.cpp](ProtoBufDecoder.cpp) - library used by the decoder
 - [main.cpp](main.cpp) - brief usage example
 
@@ -15,6 +15,7 @@ Currently supported:
 - string/bytes fields can be stored in any type convertible from std::string_view
 - repeated fields can be stored in any container implementing push_back()
 - requires C++17 due to use of std::string_view
+- allows to switch between I32, I64 and VARINT representations for the same field as far as field type keept inside int/zigzag/FP domain; fixed-width integral fields are compatible both with int and zigzag domain
 
 Support planned for:
 - C++ encoder

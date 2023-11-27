@@ -1,11 +1,19 @@
+#include <string>
+#include <cstring>
+#include <cstdint>
+#include <stdexcept>
+
+
 struct ProtoBufDecoder
 {
-    uint8_t* ptr = nullptr;
-    uint8_t* buf_end = nullptr;
+    enum {FT_VARINT=0, FT_FIXED64=1, FT_LEN=2, FT_FIXED32=5};
+
+    const char* ptr = nullptr;
+    const char* buf_end = nullptr;
 
     explicit ProtoBufDecoder(const std::string_view& view) noexcept
-        : ptr     {(uint8_t*) (view.data())},
-          buf_end {(uint8_t*) (view.data() + view.size())}
+        : ptr     {view.data()},
+          buf_end {view.data() + view.size()}
     {
     }
 
@@ -21,7 +29,7 @@ struct ProtoBufDecoder
     {
         FixedType value;
 
-        void* old_ptr = ptr;
+        auto old_ptr = ptr;
         advance_ptr(sizeof(value));
 
         memcpy(&value, old_ptr, sizeof(value));
@@ -31,18 +39,18 @@ struct ProtoBufDecoder
     uint64_t read_varint()
     {
         uint64_t value = 0;
+        uint64_t byte;
         int shift = 0;
 
         do {
             if(ptr == buf_end)  throw std::runtime_error("Unexpected end of buffer in varint");
             if(shift >= 64)     throw std::runtime_error("More than 10 bytes in varint");
 
-            auto has_more_bytes = (*ptr & 128);
-            uint64_t byte = (*ptr & 127);
-
-            value |= (byte << shift);
+            byte = *(uint8_t*)ptr;
+            value |= ((byte & 127) << shift);
             ptr++;  shift += 7;
-        } while(has_more_bytes);
+        }
+        while(byte & 128);
 
         return value;
     }
@@ -177,4 +185,4 @@ struct ProtoBufDecoder
     {
         field->push_back( parse_bytearray_value(field_type));
     }
-}
+};
