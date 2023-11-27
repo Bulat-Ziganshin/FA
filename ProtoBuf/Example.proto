@@ -1,9 +1,9 @@
-syntax = "proto3";
+syntax = "proto2";
 
 message Filter
 {
-    required int64 size = 1;   // default = 42
-    optional string name = 2;  // default = "DEFAULT NAME"
+    required int64 size = 1     [default = 42];
+    optional string name = 2    [default = "DEFAULT NAME"];
     repeated int64 values = 3;
     repeated string subnames = 4;
 }
