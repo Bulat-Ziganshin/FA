@@ -10,16 +10,15 @@ Minimal decoder of ProtoBuf messages with planned code generator:
 - [main.cpp](main.cpp) - brief usage example
 
 Currently supported:
-- C++ decoder
-- integral, string/bytearray and repeated fields
-- std::vector<char>, std::string and std::string_view as string/bytearray implementations
-- any containers implementing push_back() for repeated fields
+- only C++ decoder
+- any scalar fields
+- string/bytes fields can be stored in any type convertible from std::string_view
+- repeated fields can be stored in any container implementing push_back()
 - requires C++17 due to use of std::string_view
 
 Support planned for:
 - C++ encoder
-- code generator from .proto files (may be implemented as another backend for [pbtools](https://github.com/eerimoq/pbtools))
-- float/double fields
+- code generator from .proto files (can be implemented as backend for [pbtools](https://github.com/eerimoq/pbtools))
 - sub-messages
 - packed repeated fields
 - big-endian architectures

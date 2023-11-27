@@ -17,12 +17,15 @@ struct ProtoBufDecoder
 
 
     template <typename FixedType>
-    static FixedType read_fixed_width(void* ptr)
+    FixedType read_fixed_width()
     {
-        // TODO: reverse byte order on big-endian computers
         FixedType value;
-        memcpy(&value, ptr, sizeof(value));
-        return value;
+
+        void* old_ptr = ptr;
+        advance_ptr(sizeof(value));
+
+        memcpy(&value, old_ptr, sizeof(value));
+        return value;  // TODO: reverse byte order on big-endian computers
     }
 
     uint64_t read_varint()
@@ -45,20 +48,22 @@ struct ProtoBufDecoder
     }
 
 
+    double parse_fp_value(int field_type)
+    {
+        switch(field_type) {
+            case FT_FIXED64: return read_fixed_width<double>();
+            case FT_FIXED32: return read_fixed_width<float>();
+        }
+
+        throw std::runtime_error("Can't parse floating-point value with field type " + std::to_string(field_type));
+    }
+
     uint64_t parse_integer_value(int field_type)
     {
-        if (field_type == FT_VARINT) {
-            return read_varint();
-        }
-
-        if (field_type == FT_FIXED64) {
-            advance_ptr(8);
-            return read_fixed_width<uint64_t>(ptr-8);
-        }
-
-        if (field_type == FT_FIXED32) {
-            advance_ptr(4);
-            return read_fixed_width<uint32_t>(ptr-4);
+        switch(field_type) {
+            case FT_VARINT:  return read_varint();
+            case FT_FIXED64: return read_fixed_width<uint64_t>();
+            case FT_FIXED32: return read_fixed_width<uint32_t>();
         }
 
         throw std::runtime_error("Can't parse integral value with field type " + std::to_string(field_type));
@@ -143,6 +148,21 @@ struct ProtoBufDecoder
     void parse_repeated_zigzag_integral_field(int field_type, RepeatedIntegralType *field)
     {
         field->push_back( parse_zigzag_integer_value(field_type));
+    }
+
+    template <typename FloatingPointType>
+    void parse_fp_field(int field_type, FloatingPointType *field, bool *has_field)
+    {
+        double value = parse_fp_value(field_type);
+
+        *field = FloatingPointType(value);
+        *has_field = true;
+    }
+
+    template <typename RepeatedFloatingPointType>
+    void parse_repeated_fp_field(int field_type, RepeatedFloatingPointType *field)
+    {
+        field->push_back( parse_fp_value(field_type));
     }
 
     template <typename ByteArrayType>
