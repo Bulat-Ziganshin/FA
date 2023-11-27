@@ -56,7 +56,8 @@ struct ProtoBufDecoder
     }
 
 
-    double parse_fp_value(int field_type)
+    template <typename FloatingPointType>
+    FloatingPointType parse_fp_value(int field_type)
     {
         switch(field_type) {
             case FT_FIXED64: return read_fixed_width<double>();
@@ -69,9 +70,9 @@ struct ProtoBufDecoder
     uint64_t parse_integer_value(int field_type)
     {
         switch(field_type) {
-            case FT_VARINT:  return read_varint();
-            case FT_FIXED64: return read_fixed_width<uint64_t>();
-            case FT_FIXED32: return read_fixed_width<uint32_t>();
+            case FT_VARINT:   return read_varint();
+            case FT_FIXED64:  return read_fixed_width<uint64_t>();
+            case FT_FIXED32:  return read_fixed_width<uint32_t>();
         }
 
         throw std::runtime_error("Can't parse integral value with field type " + std::to_string(field_type));
@@ -79,12 +80,16 @@ struct ProtoBufDecoder
 
     int64_t parse_zigzag_integer_value(int field_type)
     {
-        if(field_type != FT_VARINT) {
-            throw std::runtime_error("Can't parse zigzag integer with field type " + std::to_string(field_type));
+        switch(field_type) {
+            case FT_VARINT: {
+                uint64_t value = read_varint();
+                return (value >> 1) ^ (- int64_t(value & 1));
+            }
+            case FT_FIXED64:  return read_fixed_width<int64_t>();
+            case FT_FIXED32:  return read_fixed_width<int32_t>();
         }
 
-        uint64_t value = read_varint();
-        return int64_t((value>>1) | (value<<63));
+        throw std::runtime_error("Can't parse zigzag integral with field type " + std::to_string(field_type));
     }
 
     std::string_view parse_bytearray_value(int field_type)
@@ -161,16 +166,15 @@ struct ProtoBufDecoder
     template <typename FloatingPointType>
     void parse_fp_field(int field_type, FloatingPointType *field, bool *has_field)
     {
-        double value = parse_fp_value(field_type);
-
-        *field = FloatingPointType(value);
+        *field = parse_fp_value<FloatingPointType>(field_type);
         *has_field = true;
     }
 
     template <typename RepeatedFloatingPointType>
     void parse_repeated_fp_field(int field_type, RepeatedFloatingPointType *field)
     {
-        field->push_back( parse_fp_value(field_type));
+        using T = typename RepeatedFloatingPointType::value_type;
+        field->push_back( parse_fp_value<T>(field_type));
     }
 
     template <typename ByteArrayType>
@@ -183,6 +187,7 @@ struct ProtoBufDecoder
     template <typename RepeatedByteArrayType>
     void parse_repeated_bytearray_field(int field_type, RepeatedByteArrayType *field)
     {
-        field->push_back( parse_bytearray_value(field_type));
+        using T = typename RepeatedByteArrayType::value_type;
+        field->push_back( T(parse_bytearray_value(field_type)));
     }
 };
