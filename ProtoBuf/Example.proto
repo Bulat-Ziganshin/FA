@@ -6,10 +6,15 @@ message SubMessage
 
 message Filter
 {
-    required int64 size = 1     [default = 42];
-    optional string name = 2    [default = "DEFAULT NAME"];
-    repeated int64 values = 3;
-    repeated string subnames = 4;
-    optional SubMessage msg = 5;
-    repeated SubMessage more_msgs = 6;
+    required int64      size     = 1;
+    optional sint32     altitude = 2;
+    optional float      weight   = 3;
+    optional string     name     = 4    [default = "DEFAULT NAME"];
+    optional SubMessage msg      = 5;
+
+    repeated int32      more_ints    = 11;
+    repeated sint64     more_sints   = 12;
+    repeated double     more_floats  = 13;
+    repeated bytes      more_strings = 14;
+    repeated SubMessage more_msgs    = 15;
 }
