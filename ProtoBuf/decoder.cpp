@@ -30,15 +30,15 @@ bool is_printable_str(std::string_view str)
 bool decoder(std::string_view str, int indent = 0)
 {
     ProtoBufDecoder pb(str);
-    int field_num, field_type;
+    int field_num, wire_type;
 
-    while( pb.get_next_field( &field_num, &field_type))
+    while( pb.get_next_field( &field_num, &wire_type))
     {
-        switch(field_type)
+        switch(wire_type)
         {
             case ProtoBufDecoder::FT_LEN:
             {
-                auto str = pb.parse_bytearray_value(field_type);
+                auto str = pb.parse_bytearray_value(wire_type);
                 bool is_printable = is_printable_str(str);
 
                 printf("%*s#%d: STRING[%d]%s%.*s\n",
@@ -64,11 +64,11 @@ bool decoder(std::string_view str, int indent = 0)
             case ProtoBufDecoder::FT_FIXED32:
             {
                 const char* str_type =
-                    (field_type==ProtoBufDecoder::FT_FIXED64? "I64" :
-                     field_type==ProtoBufDecoder::FT_FIXED32? "I32" :
+                    (wire_type==ProtoBufDecoder::FT_FIXED64? "I64" :
+                     wire_type==ProtoBufDecoder::FT_FIXED32? "I32" :
                      "VARINT"
                     );
-                int64_t value = pb.parse_integer_value(field_type);
+                int64_t value = pb.parse_integer_value(wire_type);
                 printf("%*s#%d: %s = %lld\n", indent, "", field_num, str_type, value);
                 break;
             }

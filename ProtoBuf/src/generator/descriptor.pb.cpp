@@ -86,19 +86,19 @@ struct FileDescriptorSet
 
 void FieldDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 {
-    int field_num, field_type;
+    int field_num, wire_type;
 
-    while( pb.get_next_field( &field_num, &field_type))
+    while( pb.get_next_field( &field_num, &wire_type))
     {
         switch(field_num)
         {
-            case 1: pb.parse_bytearray_field(field_type, &name,          &has_name); break;
-            case 3: pb.parse_integral_field (field_type, &number,        &has_number); break;
-            case 4: pb.parse_integral_field (field_type, &label,         &has_label); break;
-            case 5: pb.parse_integral_field (field_type, &type,          &has_type); break;
-            case 6: pb.parse_bytearray_field(field_type, &type_name,     &has_type_name); break;
-            case 7: pb.parse_bytearray_field(field_type, &default_value, &has_default_value); break;
-            default: pb.skip_field( field_type);
+            case 1: pb.parse_bytearray_field(wire_type, &name,          &has_name); break;
+            case 3: pb.parse_integral_field (wire_type, &number,        &has_number); break;
+            case 4: pb.parse_integral_field (wire_type, &label,         &has_label); break;
+            case 5: pb.parse_integral_field (wire_type, &type,          &has_type); break;
+            case 6: pb.parse_bytearray_field(wire_type, &type_name,     &has_type_name); break;
+            case 7: pb.parse_bytearray_field(wire_type, &default_value, &has_default_value); break;
+            default: pb.skip_field( wire_type);
         }
     }
 
@@ -110,15 +110,15 @@ void FieldDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 
 void DescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 {
-    int field_num, field_type;
+    int field_num, wire_type;
 
-    while( pb.get_next_field( &field_num, &field_type))
+    while( pb.get_next_field( &field_num, &wire_type))
     {
         switch(field_num)
         {
-            case 1: pb.parse_bytearray_field( field_type, &name, &has_name); break;
-            case 2: pb.parse_repeated_message_field( field_type, &field); break;
-            default: pb.skip_field( field_type);
+            case 1: pb.parse_bytearray_field( wire_type, &name, &has_name); break;
+            case 2: pb.parse_repeated_message_field( wire_type, &field); break;
+            default: pb.skip_field( wire_type);
         }
     }
 
@@ -130,15 +130,15 @@ void DescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 
 void FileDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 {
-    int field_num, field_type;
+    int field_num, wire_type;
 
-    while( pb.get_next_field( &field_num, &field_type))
+    while( pb.get_next_field( &field_num, &wire_type))
     {
         switch(field_num)
         {
-            case 1: pb.parse_bytearray_field( field_type, &name, &has_name); break;
-            case 4: pb.parse_repeated_message_field( field_type, &message_type); break;
-            default: pb.skip_field( field_type);
+            case 1: pb.parse_bytearray_field( wire_type, &name, &has_name); break;
+            case 4: pb.parse_repeated_message_field( wire_type, &message_type); break;
+            default: pb.skip_field( wire_type);
         }
     }
 
@@ -150,14 +150,14 @@ void FileDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 
 void FileDescriptorSet::ProtoBufDecode(ProtoBufDecoder &pb)
 {
-    int field_num, field_type;
+    int field_num, wire_type;
 
-    while( pb.get_next_field( &field_num, &field_type))
+    while( pb.get_next_field( &field_num, &wire_type))
     {
         switch(field_num)
         {
-            case 1: pb.parse_repeated_message_field( field_type, &file); break;
-            default: pb.skip_field( field_type);
+            case 1: pb.parse_repeated_message_field( wire_type, &file); break;
+            default: pb.skip_field( wire_type);
         }
     }
 }
