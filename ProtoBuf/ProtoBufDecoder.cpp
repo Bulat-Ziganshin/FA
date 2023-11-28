@@ -190,4 +190,22 @@ struct ProtoBufDecoder
         using T = typename RepeatedByteArrayType::value_type;
         field->push_back( T(parse_bytearray_value(field_type)));
     }
+
+    template <typename MessageType>
+    void parse_message_field(int field_type, MessageType *field, bool *has_field)
+    {
+        ProtoBufDecoder sub_decoder{parse_bytearray_value(field_type)};
+        field->ProtoBufDecode(sub_decoder);
+        *has_field = true;
+    }
+
+    template <typename RepeatedMessageType>
+    void parse_repeated_message_field(int field_type, RepeatedMessageType *field)
+    {
+        using T = typename RepeatedMessageType::value_type;
+
+        ProtoBufDecoder sub_decoder{parse_bytearray_value(field_type)};
+        T value;  value.ProtoBufDecode(sub_decoder);
+        field->push_back(std::move(value));
+    }
 };
