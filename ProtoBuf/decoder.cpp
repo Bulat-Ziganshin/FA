@@ -1,4 +1,9 @@
+const char* USAGE =
+"Schema-less decoder of arbitrary ProtoBuf messages\n"
+"  Usage: decoder file.pbs\n";
+
 #include <string>
+#include <cctype>
 #include <iostream>
 #include <fstream>
 #include <iterator>
@@ -6,7 +11,23 @@
 #include "ProtoBufDecoder.cpp"
 
 
-void decoder(std::string_view str, int indent = 0)
+bool is_printable_str(std::string_view str)
+{
+    if (str.size() > 100) {
+        return false;
+    }
+
+    for (auto c: str) {
+        if (! isprint(c)) {
+           return false;
+        }
+    }
+
+    return true;
+}
+
+
+bool decoder(std::string_view str, int indent = 0)
 {
     ProtoBufDecoder pb(str);
     int field_num, field_type;
@@ -15,39 +36,63 @@ void decoder(std::string_view str, int indent = 0)
     {
         switch(field_type)
         {
-            case ProtoBufDecoder::FT_LEN: {
+            case ProtoBufDecoder::FT_LEN:
+            {
                 auto str = pb.parse_bytearray_value(field_type);
-                if (str.size() > 10) {
+                bool is_printable = is_printable_str(str);
+
+                printf("%*s#%d: STRING[%d]%s%.*s\n",
+                    indent, "",
+                    field_num,
+                    str.size(),
+                    (is_printable? " = ": ""),
+                    (is_printable? str.size() : 0),
+                    str.data());
+
+                if (! is_printable) {
                     try {
                         decoder(str, indent+4);
                         break;
                     } catch (const std::exception& e) {
                     }
                 }
-                printf("%*sSTRING[len=%d] #%d%s%.*s\n", indent, "", str.size(), field_num,
-                    (str.size() <= 10? " = ": ""),
-                    (str.size() <= 10? str.size() : 0),
-                    str.data());
                 break;
             }
-            default: {
-                printf("%*sUNSUPPORTED[type=%d] #%d\n", indent, "", field_type, field_num);
-                pb.skip_field( field_type);
+
+            case ProtoBufDecoder::FT_VARINT:
+            case ProtoBufDecoder::FT_FIXED64:
+            case ProtoBufDecoder::FT_FIXED32:
+            {
+                const char* str_type =
+                    (field_type==ProtoBufDecoder::FT_FIXED64? "I64" :
+                     field_type==ProtoBufDecoder::FT_FIXED32? "I32" :
+                     "VARINT"
+                    );
+                int64_t value = pb.parse_integer_value(field_type);
+                printf("%*s#%d: %s = %lld\n", indent, "", field_num, str_type, value);
+                break;
             }
+
+            default:  return false;
         }
     }
+
+    return true;
 }
 
 
 int main(int argc, char** argv)
 {
-    if (argc==1)  return 1;
+    if (argc != 2) {
+        printf(USAGE);
+        return 1;
+    }
 
     std::ifstream ifs(argv[1], std::ios::binary);
     std::string str(std::istreambuf_iterator<char>{ifs}, {});
-    printf("=== Filesize = %d\n", str.size());
 
     try {
+        printf("=== Filesize = %d\n", str.size());
         decoder(str);
         printf("=== Decoding succeed!\n");
     } catch (const std::exception& e) {
