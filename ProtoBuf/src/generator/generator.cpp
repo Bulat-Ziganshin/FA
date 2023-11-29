@@ -41,7 +41,15 @@ void {0}::ProtoBufDecode(ProtoBufDecoder &pb)
             default: pb.skip_field(wire_type);
         }}
     }}
+    {4}
 }}
+)---";
+
+
+constexpr const char* CHECK_REQUIRED_FIELD_TEMPLATE = R"---(
+    if(! has_{1}) {{
+        throw std::runtime_error("Decoded protobuf has no required field {0}.{1}");
+    }}
 )---";
 
 
@@ -117,7 +125,7 @@ void generator(FileDescriptorSet &proto)
 
     for (auto message_type: file.message_type)
     {
-        std::string fields_defs, has_fields_defs, decode_cases;
+        std::string fields_defs, has_fields_defs, decode_cases, check_required_fields;
 
         for (auto field: message_type.field)
         {
@@ -147,9 +155,14 @@ void generator(FileDescriptorSet &proto)
             }
 
             decode_cases += std::format("            case {}: {}; break;\n", field.number, decoder);
+
+            if (field.label == FieldDescriptorProto::LABEL_REQUIRED) {
+                check_required_fields += std::format(CHECK_REQUIRED_FIELD_TEMPLATE, message_type.name, field.name);
+            }
         }
 
-        std::cout << std::format(MESSAGE_TEMPLATE, message_type.name, fields_defs, has_fields_defs, decode_cases);
+        std::cout << std::format(MESSAGE_TEMPLATE,
+            message_type.name, fields_defs, has_fields_defs, decode_cases, check_required_fields);
     }
 }
 

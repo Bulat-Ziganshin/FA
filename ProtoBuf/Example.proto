@@ -12,7 +12,7 @@ message Filter
     optional string     name     = 4    [default = "DEFAULT NAME"];
     optional SubMessage msg      = 5;
 
-    repeated int32      more_ints    = 11;
+    repeated uint32     more_uints   = 11;
     repeated sint64     more_sints   = 12;
     repeated double     more_floats  = 13;
     repeated bytes      more_strings = 14;
