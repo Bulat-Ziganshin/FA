@@ -36,7 +36,7 @@ bool decoder(std::string_view str, int indent = 0)
     {
         switch(wire_type)
         {
-            case ProtoBufDecoder::FT_LEN:
+            case ProtoBufDecoder::WIRETYPE_LENGTH_DELIMITED:
             {
                 auto str = pb.parse_bytearray_value(wire_type);
                 bool is_printable = is_printable_str(str);
@@ -59,13 +59,13 @@ bool decoder(std::string_view str, int indent = 0)
                 break;
             }
 
-            case ProtoBufDecoder::FT_VARINT:
-            case ProtoBufDecoder::FT_FIXED64:
-            case ProtoBufDecoder::FT_FIXED32:
+            case ProtoBufDecoder::WIRETYPE_VARINT:
+            case ProtoBufDecoder::WIRETYPE_FIXED64:
+            case ProtoBufDecoder::WIRETYPE_FIXED32:
             {
                 const char* str_type =
-                    (wire_type==ProtoBufDecoder::FT_FIXED64? "I64" :
-                     wire_type==ProtoBufDecoder::FT_FIXED32? "I32" :
+                    (wire_type==ProtoBufDecoder::WIRETYPE_FIXED64? "I64" :
+                     wire_type==ProtoBufDecoder::WIRETYPE_FIXED32? "I32" :
                      "VARINT"
                     );
                 int64_t value = pb.parse_integer_value(wire_type);

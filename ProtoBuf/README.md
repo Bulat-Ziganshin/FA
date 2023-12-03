@@ -24,25 +24,21 @@ Currently supported:
 - the generated code checks presence of required fields in the decoded message
 
 Support planned for:
-- encoding
+- encoding, including automatic generation of encoders from .pbs files
 - packed repeated fields
 - group wire format
 - big-endian architectures
-- validation of enum, integer and bool values in the generated code
+- validation of enum, integer and bool values by the generated code
 - support of enum/oneof fields and nested message type definitions by the code generator
 - [efficient upb read_varint](https://github.com/protocolbuffers/protobuf/blob/a2f92689dac8a7dbea584919c7de52d6a28d66d1/upb/wire/decode.c#L122)
-
-Not planned:
-- other languages (may be except for Lua)
-- UTF-8 validation
 
 Compared to the official ProtoBuf library, it allows more flexibility
 in modifying the field type without losing the decoding compatibility.
 You can make any changes to field type as far as it stays inside the same "type domain":
-- FP - only float and double
-- zigzag - includes sint32 and sint64
-- bytearray - strings, bytes and sub-messages
-- integral - all remaining scalar types (enum, bool, `int*`, `uint*`)
+- FP domain - only float and double
+- zigzag domain - includes sint32 and sint64
+- bytearray domain - strings, bytes and sub-messages
+- integrals domain - all remaining scalar types (enum, bool, `int*`, `uint*`)
 - aside of that, fixed-width integral fields are compatible with both integral and zigzag domain
-- allows to switch between I32, I64 and VARINT representations for the same field as far as field type keept inside int/zigzag/FP domain
-- note that when changing the field type, values will be decoded correctly only if they fit into the range of both old and new field type - for integral types, and precision will be truncated to 32 bits - for FP types
+- allows to switch between I32, I64 and VARINT representations for the same field as far as field type keept inside the same domain
+- note that when changing the field type, values will be decoded correctly only if they fit into the range of both old and new field type - for integral types; while precision will be truncated to 32 bits - for FP types

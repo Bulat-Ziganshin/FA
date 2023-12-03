@@ -13,7 +13,15 @@ Decoder library consists of 3 levels:
 
 struct ProtoBufDecoder
 {
-    enum {FT_VARINT=0, FT_FIXED64=1, FT_LEN=2, FT_FIXED32=5};
+    enum WireType
+    {
+      WIRETYPE_VARINT = 0,
+      WIRETYPE_FIXED64 = 1,
+      WIRETYPE_LENGTH_DELIMITED = 2,
+      WIRETYPE_START_GROUP = 3,
+      WIRETYPE_END_GROUP = 4,
+      WIRETYPE_FIXED32 = 5,
+    };
 
     const char* ptr = nullptr;
     const char* buf_end = nullptr;
@@ -67,8 +75,8 @@ struct ProtoBufDecoder
     FloatingPointType parse_fp_value(int wire_type)
     {
         switch(wire_type) {
-            case FT_FIXED64: return read_fixed_width<double>();
-            case FT_FIXED32: return read_fixed_width<float>();
+            case WIRETYPE_FIXED64: return read_fixed_width<double>();
+            case WIRETYPE_FIXED32: return read_fixed_width<float>();
         }
 
         throw std::runtime_error("Can't parse floating-point value with field type " + std::to_string(wire_type));
@@ -77,9 +85,9 @@ struct ProtoBufDecoder
     uint64_t parse_integer_value(int wire_type)
     {
         switch(wire_type) {
-            case FT_VARINT:   return read_varint();
-            case FT_FIXED64:  return read_fixed_width<uint64_t>();
-            case FT_FIXED32:  return read_fixed_width<uint32_t>();
+            case WIRETYPE_VARINT:   return read_varint();
+            case WIRETYPE_FIXED64:  return read_fixed_width<uint64_t>();
+            case WIRETYPE_FIXED32:  return read_fixed_width<uint32_t>();
         }
 
         throw std::runtime_error("Can't parse integral value with field type " + std::to_string(wire_type));
@@ -88,12 +96,12 @@ struct ProtoBufDecoder
     int64_t parse_zigzag_value(int wire_type)
     {
         switch(wire_type) {
-            case FT_VARINT: {
+            case WIRETYPE_VARINT: {
                 uint64_t value = read_varint();
                 return (value >> 1) ^ (- int64_t(value & 1));
             }
-            case FT_FIXED64:  return read_fixed_width<int64_t>();
-            case FT_FIXED32:  return read_fixed_width<int32_t>();
+            case WIRETYPE_FIXED64:  return read_fixed_width<int64_t>();
+            case WIRETYPE_FIXED32:  return read_fixed_width<int32_t>();
         }
 
         throw std::runtime_error("Can't parse zigzag integral with field type " + std::to_string(wire_type));
@@ -101,7 +109,7 @@ struct ProtoBufDecoder
 
     std::string_view parse_bytearray_value(int wire_type)
     {
-        if(wire_type != FT_LEN) {
+        if(wire_type != WIRETYPE_LENGTH_DELIMITED) {
             throw std::runtime_error("Can't parse bytearray with field type " + std::to_string(wire_type));
         }
 
@@ -125,13 +133,13 @@ struct ProtoBufDecoder
 
     void skip_field(int wire_type)
     {
-        if (wire_type == FT_VARINT) {
+        if (wire_type == WIRETYPE_VARINT) {
             read_varint();
-        } else if (wire_type == FT_FIXED32) {
+        } else if (wire_type == WIRETYPE_FIXED32) {
             advance_ptr(4);
-        } else if (wire_type == FT_FIXED64) {
+        } else if (wire_type == WIRETYPE_FIXED64) {
             advance_ptr(8);
-        } else if (wire_type == FT_LEN) {
+        } else if (wire_type == WIRETYPE_LENGTH_DELIMITED) {
             uint64_t len = read_varint();
             advance_ptr(len);
         } else {
@@ -141,12 +149,12 @@ struct ProtoBufDecoder
 
 
     template <typename IntegralType>
-    void parse_integral_field(int wire_type, IntegralType *field, bool *has_field)
+    void parse_integral_field(int wire_type, IntegralType *field, bool *has_field = nullptr)
     {
         uint64_t value = parse_integer_value(wire_type);
 
         *field = IntegralType(value);
-        *has_field = true;
+        if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedIntegralType>
@@ -156,12 +164,12 @@ struct ProtoBufDecoder
     }
 
     template <typename IntegralType>
-    void parse_zigzag_field(int wire_type, IntegralType *field, bool *has_field)
+    void parse_zigzag_field(int wire_type, IntegralType *field, bool *has_field = nullptr)
     {
         int64_t value = parse_zigzag_value(wire_type);
 
         *field = IntegralType(value);
-        *has_field = true;
+        if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedIntegralType>
@@ -171,10 +179,10 @@ struct ProtoBufDecoder
     }
 
     template <typename FloatingPointType>
-    void parse_fp_field(int wire_type, FloatingPointType *field, bool *has_field)
+    void parse_fp_field(int wire_type, FloatingPointType *field, bool *has_field = nullptr)
     {
         *field = parse_fp_value<FloatingPointType>(wire_type);
-        *has_field = true;
+        if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedFloatingPointType>
@@ -185,10 +193,10 @@ struct ProtoBufDecoder
     }
 
     template <typename ByteArrayType>
-    void parse_bytearray_field(int wire_type, ByteArrayType *field, bool *has_field)
+    void parse_bytearray_field(int wire_type, ByteArrayType *field, bool *has_field = nullptr)
     {
         *field = parse_bytearray_value(wire_type);
-        *has_field = true;
+        if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedByteArrayType>
@@ -199,11 +207,11 @@ struct ProtoBufDecoder
     }
 
     template <typename MessageType>
-    void parse_message_field(int wire_type, MessageType *field, bool *has_field)
+    void parse_message_field(int wire_type, MessageType *field, bool *has_field = nullptr)
     {
         ProtoBufDecoder sub_decoder{parse_bytearray_value(wire_type)};
         field->ProtoBufDecode(sub_decoder);
-        *has_field = true;
+        if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedMessageType>
