@@ -32,17 +32,15 @@ struct {0}
 
 void {0}::ProtoBufDecode(ProtoBufDecoder &pb)
 {{
-    int field_num, wire_type;
-
-    while( pb.get_next_field( &field_num, &wire_type))
+    while(pb.get_next_field())
     {{
-        switch(field_num)
+        switch(pb.field_num)
         {{
 {3}
-            default: pb.skip_field(wire_type);
+            default: pb.skip_field();
         }}
     }}
-    {4}
+{4}
 }}
 )---";
 
@@ -157,9 +155,9 @@ void generator(FileDescriptorSet &proto)
             std::string decoder;
 
             if (field.label == FieldDescriptorProto::LABEL_REPEATED) {
-                decoder = std::format("pb.parse_repeated_{}_field( wire_type, &{})", domain, field.name);
+                decoder = std::format("pb.parse_repeated_{}_field(&{})", domain, field.name);
             } else {
-                decoder = std::format("pb.parse_{0}_field( wire_type, &{1}, &has_{1})", domain, field.name);
+                decoder = std::format("pb.parse_{0}_field(&{1}, &has_{1})", domain, field.name);
             }
 
             decode_cases += std::format("            case {}: {}; break;\n", field.number, decoder);

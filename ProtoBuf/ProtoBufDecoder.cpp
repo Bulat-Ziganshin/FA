@@ -25,6 +25,9 @@ struct ProtoBufDecoder
 
     const char* ptr = nullptr;
     const char* buf_end = nullptr;
+    int field_num;
+    WireType wire_type;
+
 
     explicit ProtoBufDecoder(const std::string_view& view) noexcept
         : ptr     {view.data()},
@@ -72,7 +75,7 @@ struct ProtoBufDecoder
 
 
     template <typename FloatingPointType>
-    FloatingPointType parse_fp_value(int wire_type)
+    FloatingPointType parse_fp_value()
     {
         switch(wire_type) {
             case WIRETYPE_FIXED64: return read_fixed_width<double>();
@@ -82,7 +85,7 @@ struct ProtoBufDecoder
         throw std::runtime_error("Can't parse floating-point value with field type " + std::to_string(wire_type));
     }
 
-    uint64_t parse_integer_value(int wire_type)
+    uint64_t parse_integer_value()
     {
         switch(wire_type) {
             case WIRETYPE_VARINT:   return read_varint();
@@ -93,7 +96,7 @@ struct ProtoBufDecoder
         throw std::runtime_error("Can't parse integral value with field type " + std::to_string(wire_type));
     }
 
-    int64_t parse_zigzag_value(int wire_type)
+    int64_t parse_zigzag_value()
     {
         switch(wire_type) {
             case WIRETYPE_VARINT: {
@@ -107,7 +110,7 @@ struct ProtoBufDecoder
         throw std::runtime_error("Can't parse zigzag integral with field type " + std::to_string(wire_type));
     }
 
-    std::string_view parse_bytearray_value(int wire_type)
+    std::string_view parse_bytearray_value()
     {
         if(wire_type != WIRETYPE_LENGTH_DELIMITED) {
             throw std::runtime_error("Can't parse bytearray with field type " + std::to_string(wire_type));
@@ -120,18 +123,18 @@ struct ProtoBufDecoder
     }
 
 
-    bool get_next_field(int* field_num, int* wire_type)
+    bool get_next_field()
     {
         if(ptr == buf_end)  return false;
 
         uint64_t number = read_varint();
-        *field_num = (number >> 3);
-        *wire_type = (number & 7);
+        field_num = (number >> 3);
+        wire_type = WireType(number & 7);
 
         return true;
     }
 
-    void skip_field(int wire_type)
+    void skip_field()
     {
         if (wire_type == WIRETYPE_VARINT) {
             read_varint();
@@ -149,77 +152,77 @@ struct ProtoBufDecoder
 
 
     template <typename IntegralType>
-    void parse_integral_field(int wire_type, IntegralType *field, bool *has_field = nullptr)
+    void parse_integral_field(IntegralType *field, bool *has_field = nullptr)
     {
-        uint64_t value = parse_integer_value(wire_type);
+        uint64_t value = parse_integer_value();
 
         *field = IntegralType(value);
         if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedIntegralType>
-    void parse_repeated_integral_field(int wire_type, RepeatedIntegralType *field)
+    void parse_repeated_integral_field(RepeatedIntegralType *field)
     {
-        field->push_back( parse_integer_value(wire_type));
+        field->push_back(parse_integer_value());
     }
 
     template <typename IntegralType>
-    void parse_zigzag_field(int wire_type, IntegralType *field, bool *has_field = nullptr)
+    void parse_zigzag_field(IntegralType *field, bool *has_field = nullptr)
     {
-        int64_t value = parse_zigzag_value(wire_type);
+        int64_t value = parse_zigzag_value();
 
         *field = IntegralType(value);
         if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedIntegralType>
-    void parse_repeated_zigzag_field(int wire_type, RepeatedIntegralType *field)
+    void parse_repeated_zigzag_field(RepeatedIntegralType *field)
     {
-        field->push_back( parse_zigzag_value(wire_type));
+        field->push_back(parse_zigzag_value());
     }
 
     template <typename FloatingPointType>
-    void parse_fp_field(int wire_type, FloatingPointType *field, bool *has_field = nullptr)
+    void parse_fp_field(FloatingPointType *field, bool *has_field = nullptr)
     {
-        *field = parse_fp_value<FloatingPointType>(wire_type);
+        *field = parse_fp_value<FloatingPointType>();
         if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedFloatingPointType>
-    void parse_repeated_fp_field(int wire_type, RepeatedFloatingPointType *field)
+    void parse_repeated_fp_field(RepeatedFloatingPointType *field)
     {
         using T = typename RepeatedFloatingPointType::value_type;
-        field->push_back( parse_fp_value<T>(wire_type));
+        field->push_back(parse_fp_value<T>());
     }
 
     template <typename ByteArrayType>
-    void parse_bytearray_field(int wire_type, ByteArrayType *field, bool *has_field = nullptr)
+    void parse_bytearray_field(ByteArrayType *field, bool *has_field = nullptr)
     {
-        *field = parse_bytearray_value(wire_type);
+        *field = parse_bytearray_value();
         if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedByteArrayType>
-    void parse_repeated_bytearray_field(int wire_type, RepeatedByteArrayType *field)
+    void parse_repeated_bytearray_field(RepeatedByteArrayType *field)
     {
         using T = typename RepeatedByteArrayType::value_type;
-        field->push_back( T(parse_bytearray_value(wire_type)));
+        field->push_back( T(parse_bytearray_value()));
     }
 
     template <typename MessageType>
-    void parse_message_field(int wire_type, MessageType *field, bool *has_field = nullptr)
+    void parse_message_field(MessageType *field, bool *has_field = nullptr)
     {
-        ProtoBufDecoder sub_decoder{parse_bytearray_value(wire_type)};
+        ProtoBufDecoder sub_decoder{parse_bytearray_value()};
         field->ProtoBufDecode(sub_decoder);
         if(has_field)  *has_field = true;
     }
 
     template <typename RepeatedMessageType>
-    void parse_repeated_message_field(int wire_type, RepeatedMessageType *field)
+    void parse_repeated_message_field(RepeatedMessageType *field)
     {
         using T = typename RepeatedMessageType::value_type;
 
-        ProtoBufDecoder sub_decoder{parse_bytearray_value(wire_type)};
+        ProtoBufDecoder sub_decoder{parse_bytearray_value()};
         T value;  value.ProtoBufDecode(sub_decoder);
         field->push_back(std::move(value));
     }
