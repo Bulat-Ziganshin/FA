@@ -25,7 +25,7 @@ struct ProtoBufDecoder
 
     const char* ptr = nullptr;
     const char* buf_end = nullptr;
-    int field_num;
+    uint32_t field_num;
     WireType wire_type;
 
 
@@ -128,8 +128,8 @@ struct ProtoBufDecoder
         if(ptr == buf_end)  return false;
 
         uint64_t number = read_varint();
-        field_num = (number >> 3);
-        wire_type = WireType(number & 7);
+        field_num = (number / 8);
+        wire_type = WireType(number % 8);
 
         return true;
     }

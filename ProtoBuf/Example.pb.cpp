@@ -8,9 +8,15 @@ struct SubMessage
 {
 
 
+    void ProtoBufEncode(ProtoBufEncoder &pb);
     void ProtoBufDecode(ProtoBufDecoder &pb);
 };
 
+
+void SubMessage::ProtoBufEncode(ProtoBufEncoder &pb)
+{
+
+}
 
 void SubMessage::ProtoBufDecode(ProtoBufDecoder &pb)
 {
@@ -44,9 +50,25 @@ struct Filter
     bool has_name = false;
     bool has_msg = false;
 
+    void ProtoBufEncode(ProtoBufEncoder &pb);
     void ProtoBufDecode(ProtoBufDecoder &pb);
 };
 
+
+void Filter::ProtoBufEncode(ProtoBufEncoder &pb)
+{
+    pb.write_varint_field(1, size);
+    pb.write_zigzag_field(2, altitude);
+    pb.write_fixed_width_field(3, weight);
+    pb.write_bytearray_field(4, name);
+    pb.write_message_field(5, msg);
+    pb.write_repeated_varint_field(11, more_uints);
+    pb.write_repeated_zigzag_field(12, more_sints);
+    pb.write_repeated_fixed_width_field(13, more_floats);
+    pb.write_repeated_bytearray_field(14, more_strings);
+    pb.write_repeated_message_field(15, more_msgs);
+
+}
 
 void Filter::ProtoBufDecode(ProtoBufDecoder &pb)
 {

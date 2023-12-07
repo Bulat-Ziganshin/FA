@@ -20,15 +20,21 @@ constexpr const char* FILE_TEMPLATE = R"---(// This file was auto-generated from
 
 )---";
 
-// {0}=message_type.name, {1}=fields_defs, {2}=has_fields_defs, {3}=decode_cases, {4}=check_required_fields
+// {0}=message_type.name, {1}=fields_defs, {2}=has_fields_defs, {3}=encoder, {4}=decode_cases, {5}=check_required_fields
 constexpr const char* MESSAGE_TEMPLATE = R"---(
 struct {0}
 {{
 {1}
 {2}
+    void ProtoBufEncode(ProtoBufEncoder &pb);
     void ProtoBufDecode(ProtoBufDecoder &pb);
 }};
 
+
+void {0}::ProtoBufEncode(ProtoBufEncoder &pb)
+{{
+{3}
+}}
 
 void {0}::ProtoBufDecode(ProtoBufDecoder &pb)
 {{
@@ -36,11 +42,11 @@ void {0}::ProtoBufDecode(ProtoBufDecoder &pb)
     {{
         switch(pb.field_num)
         {{
-{3}
+{4}
             default: pb.skip_field();
         }}
     }}
-{4}
+{5}
 }}
 )---";
 
@@ -54,7 +60,32 @@ constexpr const char* CHECK_REQUIRED_FIELD_TEMPLATE = R"---(
 
 
 
-std::string_view domain_string(FieldDescriptorProto &field)
+std::string_view encoder_domain_string(FieldDescriptorProto &field)
+{
+    switch(field.type)
+    {
+        case FieldDescriptorProto::TYPE_DOUBLE:
+        case FieldDescriptorProto::TYPE_FLOAT:
+        case FieldDescriptorProto::TYPE_FIXED64:
+        case FieldDescriptorProto::TYPE_FIXED32:
+        case FieldDescriptorProto::TYPE_SFIXED32:
+        case FieldDescriptorProto::TYPE_SFIXED64: return "fixed_width";
+
+        case FieldDescriptorProto::TYPE_SINT32:
+        case FieldDescriptorProto::TYPE_SINT64:   return "zigzag";
+
+        case FieldDescriptorProto::TYPE_STRING:
+        case FieldDescriptorProto::TYPE_BYTES:    return "bytearray";
+
+        case FieldDescriptorProto::TYPE_MESSAGE:  return "message";
+
+        case FieldDescriptorProto::TYPE_GROUP:    return "?group";
+
+        default:                                  return "varint";
+    }
+}
+
+std::string_view decoder_domain_string(FieldDescriptorProto &field)
 {
     switch(field.type)
     {
@@ -131,7 +162,7 @@ void generator(FileDescriptorSet &proto)
 
     for (auto message_type: file.message_type)
     {
-        std::string fields_defs, has_fields_defs, decode_cases, check_required_fields;
+        std::string fields_defs, has_fields_defs, encoder, decode_cases, check_required_fields;
 
         for (auto field: message_type.field)
         {
@@ -150,14 +181,21 @@ void generator(FileDescriptorSet &proto)
                 has_fields_defs += std::format("    bool has_{} = false;\n", field.name);
             }
 
+
+            // Generate message encoding function
+            auto encoder_domain = encoder_domain_string(field);
+            auto repeated = (field.label == FieldDescriptorProto::LABEL_REPEATED? "repeated_":"");
+            encoder += std::format("    pb.write_{0}{1}_field({2}, {3});\n", repeated, encoder_domain, field.number, field.name);
+
+
             // Generate message decoding function
-            auto domain = domain_string(field);
+            auto decoder_domain = decoder_domain_string(field);
             std::string decoder;
 
             if (field.label == FieldDescriptorProto::LABEL_REPEATED) {
-                decoder = std::format("pb.parse_repeated_{}_field(&{})", domain, field.name);
+                decoder = std::format("pb.parse_repeated_{0}_field(&{1})", decoder_domain, field.name);
             } else {
-                decoder = std::format("pb.parse_{0}_field(&{1}, &has_{1})", domain, field.name);
+                decoder = std::format("pb.parse_{0}_field(&{1}, &has_{1})", decoder_domain, field.name);
             }
 
             decode_cases += std::format("            case {}: {}; break;\n", field.number, decoder);
@@ -168,7 +206,7 @@ void generator(FileDescriptorSet &proto)
         }
 
         std::cout << std::format(MESSAGE_TEMPLATE,
-            message_type.name, fields_defs, has_fields_defs, decode_cases, check_required_fields);
+            message_type.name, fields_defs, has_fields_defs, encoder, decode_cases, check_required_fields);
     }
 }
 

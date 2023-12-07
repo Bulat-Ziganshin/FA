@@ -1,30 +1,30 @@
-This is a minimal implementation of C++ ProtoBuf decoding library:
-- optimized for code size, the entire decoding library is only 200 LOC
+This is a minimal implementation of C++ ProtoBuf library:
+- optimized for code size, the entire library is only 400 LOC
 - reasonable speed due to use of std::string_view
-- generator of corresponding C++ structures and decoders from .pbs (compiled .proto) files
+- generator of corresponding C++ structures and encoders/decoders from .pbs (compiled .proto) files
 - the closest competition is [protozero](https://github.com/mapbox/protozero)
 
-This library is sincerely yours if you need to quickly implement decoding of
+This library is sincerely yours if you need to quickly implement encoding/decoding of
 simple ProtoBuf messages without inflating your program.
 There is no any build infrastructure - if you need this code, just grab it and go!
 
 Files:
 - [Example.proto](Example.proto) - ProtoBuf definition of the serialized structure
-- [Example.pb.cpp](Example.pb.cpp) - auto-generated corresponding C++ structure and ProtoBuf decoder for it
+- [Example.pb.cpp](Example.pb.cpp) - auto-generated corresponding C++ structure and ProtoBuf encoder/decoder for it
+- [ProtoBufEncoder.cpp](ProtoBufEncoder.cpp) - library used by the encoder
 - [ProtoBufDecoder.cpp](ProtoBufDecoder.cpp) - library used by the decoder
 - [main.cpp](main.cpp) - brief usage example
 - [decoder.cpp](decoder.cpp) - schema-less decoder of arbitrary ProtoBuf messages
-- [generator.cpp](src/generator/generator.cpp) - generator of decoders from .pbs files
+- [generator.cpp](src/generator/generator.cpp) - generator of encoders/decoders from .pbs files
 
 Currently supported:
-- only decoding (requires C++17, may be lowered to C++11 by replacing uses of std::string_view with std::string)
+- encoding & decoding (requires C++17, may be lowered to C++11 by replacing uses of std::string_view with std::string)
 - any scalar/message fields, including repeated ones
 - string/bytes fields can be stored in any type convertible from std::string_view
-- repeated fields can be stored in any container implementing push_back()
+- repeated fields can be stored in any container implementing push_back() and begin()/end()
 - the generated code checks presence of required fields in the decoded message
 
 Support planned for:
-- encoding, including automatic generation of encoders from .pbs files
 - packed repeated fields
 - group wire format
 - big-endian architectures

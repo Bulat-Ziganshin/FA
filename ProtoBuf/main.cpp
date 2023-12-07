@@ -1,3 +1,4 @@
+#include "ProtoBufEncoder.cpp"
 #include "ProtoBufDecoder.cpp"
 #include "Example.pb.cpp"
 
