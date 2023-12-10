@@ -2,19 +2,28 @@ syntax = "proto2";
 
 message SubMessage
 {
+    required int64      req_int64    = 1;
+    optional sint32     opt_sint32   = 2;
+    required uint64     req_uint64   = 3;
+    optional fixed32    opt_fixed32  = 4;
+    required float      req_float    = 5;
+    optional string     opt_string   = 6    [default = "DEFAULT STRING"];
+
+    repeated int32      rep_int32    = 11;
+    repeated uint64     rep_uint64   = 12;
+    repeated double     rep_double   = 13;
 }
 
-message Filter
+message MainMessage
 {
-    required int64      size     = 1;
-    optional sint32     altitude = 2;
-    optional float      weight   = 3;
-    optional string     name     = 4    [default = "DEFAULT NAME"];
-    optional SubMessage msg      = 5;
+    optional uint32     opt_uint32   = 1;
+    required sfixed64   req_sfixed64 = 2;
+    optional double     opt_double   = 3    [default = 3.14];
+    required bytes      req_bytes    = 4;
+    required SubMessage req_msg      = 5;
 
-    repeated uint32     more_uints   = 11;
-    repeated sint64     more_sints   = 12;
-    repeated double     more_floats  = 13;
-    repeated bytes      more_strings = 14;
-    repeated SubMessage more_msgs    = 15;
+    repeated sint32     rep_sint32   = 11;
+    repeated fixed64    rep_fixed64  = 12;
+    repeated string     rep_string   = 13;
+    repeated SubMessage rep_msg      = 14;
 }
