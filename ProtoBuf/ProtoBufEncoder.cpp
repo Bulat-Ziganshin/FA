@@ -6,7 +6,10 @@
 
 struct ProtoBufEncoder
 {
-    const int MAX_VARINT_SIZE = (64+6)/7;  // number of 7-bit chunks in 64-bit int
+    enum {
+        MAX_VARINT_SIZE = (64+6)/7,  // number of 7-bit chunks in 64-bit int
+        MAX_LENGTH_CODE_SIZE = (32+6)/7,  // number of 7-bit chunks in 32-bit int encoding message length
+    };
 
     enum WireType
     {
@@ -18,31 +21,31 @@ struct ProtoBufEncoder
       WIRETYPE_FIXED32 = 5,
     };
 
-    std::string str;
+    std::string buffer;
     char* ptr;
     char* buf_end;
 
 
     ProtoBufEncoder()
     {
-        ptr = buf_end = str.data();
+        ptr = buf_end = buffer.data();
     }
 
     std::string result()
     {
-        str.resize(pos());
-        str.shrink_to_fit();
+        buffer.resize(pos());
+        buffer.shrink_to_fit();
 
-        std::string temp_str;
-        std::swap(str, temp_str);
-        ptr = buf_end = str.data();
+        std::string temp_buffer;
+        std::swap(buffer, temp_buffer);
+        ptr = buf_end = buffer.data();
 
-        return temp_str;
+        return temp_buffer;
     }
 
     size_t pos()
     {
-        return ptr - str.data();
+        return ptr - buffer.data();
     }
 
     char* advance_ptr(int bytes)
@@ -50,9 +53,9 @@ struct ProtoBufEncoder
         if(buf_end - ptr < bytes)
         {
             auto old_pos = pos();
-            str.resize(str.size()*2 + bytes);
-            ptr = str.data() + old_pos;
-            buf_end = str.data() + str.size();
+            buffer.resize(buffer.size()*2 + bytes);
+            ptr = buffer.data() + old_pos;
+            buf_end = buffer.data() + buffer.size();
         }
         ptr += bytes;
         return ptr - bytes;
@@ -77,10 +80,10 @@ struct ProtoBufEncoder
         *ptr++ = value;
     }
 
-    void write_maxlen_varint_at(size_t pos, uint64_t value)
+    void write_varint_at(size_t varint_pos, size_t varint_size, uint64_t value)
     {
-        auto ptr = str.data() + pos;
-        for (int i = 0; i < MAX_VARINT_SIZE - 1; ++i)
+        auto ptr = buffer.data() + varint_pos;
+        for (int i = 1; i < varint_size; ++i)
         {
             *ptr++ = (value & 127) | 128;
             value /= 128;
@@ -109,7 +112,7 @@ struct ProtoBufEncoder
     // Start a length-delimited field with yet unknown size and return its start_pos
     size_t start_length_delimited()
     {
-        advance_ptr(MAX_VARINT_SIZE);
+        advance_ptr(MAX_LENGTH_CODE_SIZE);
         return pos();
     }
 
@@ -117,7 +120,7 @@ struct ProtoBufEncoder
     void commit_length_delimited(size_t start_pos)
     {
         size_t field_len = pos() - start_pos;
-        write_maxlen_varint_at(start_pos - MAX_VARINT_SIZE, field_len);
+        write_varint_at(start_pos - MAX_LENGTH_CODE_SIZE, MAX_LENGTH_CODE_SIZE, field_len);
     }
 
     template <typename Lambda>
