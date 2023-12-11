@@ -19,16 +19,25 @@ struct ProtoBufEncoder
     };
 
     std::string str;
-    char* ptr = nullptr;
-    char* buf_end = nullptr;
+    char* ptr;
+    char* buf_end;
 
+
+    ProtoBufEncoder()
+    {
+        ptr = buf_end = str.data();
+    }
 
     std::string result()
     {
         str.resize(pos());
         str.shrink_to_fit();
-        ptr = buf_end = nullptr;
-        return std::move(str);
+
+        std::string temp_str;
+        std::swap(str, temp_str);
+        ptr = buf_end = str.data();
+
+        return temp_str;
     }
 
     size_t pos()
