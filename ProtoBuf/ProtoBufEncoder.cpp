@@ -202,3 +202,12 @@ struct ProtoBufEncoder
         for(auto &x: value)  write_message_field(field_num, x);
     }
 };
+
+
+template <typename MessageType>
+inline std::string ProtoBufEncode(MessageType&& msg)
+{
+    ProtoBufEncoder pb;
+    msg.ProtoBufEncode(pb);
+    return pb.result();
+}

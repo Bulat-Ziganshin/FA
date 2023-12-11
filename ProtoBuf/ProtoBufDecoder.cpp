@@ -11,6 +11,15 @@ Decoder library consists of 3 levels:
 #include <stdexcept>
 
 
+template <typename MessageType>
+inline MessageType ProtoBufDecode(std::string_view buffer)
+{
+    MessageType msg;
+    msg.ProtoBufDecode(buffer);
+    return msg;
+}
+
+
 struct ProtoBufDecoder
 {
     enum WireType
@@ -154,9 +163,7 @@ struct ProtoBufDecoder
     template <typename IntegralType>
     void parse_integral_field(IntegralType *field, bool *has_field = nullptr)
     {
-        uint64_t value = parse_integer_value();
-
-        *field = IntegralType(value);
+        *field = IntegralType(parse_integer_value());
         if(has_field)  *has_field = true;
     }
 
@@ -169,9 +176,7 @@ struct ProtoBufDecoder
     template <typename IntegralType>
     void parse_zigzag_field(IntegralType *field, bool *has_field = nullptr)
     {
-        int64_t value = parse_zigzag_value();
-
-        *field = IntegralType(value);
+        *field = IntegralType(parse_zigzag_value());
         if(has_field)  *has_field = true;
     }
 
@@ -212,8 +217,7 @@ struct ProtoBufDecoder
     template <typename MessageType>
     void parse_message_field(MessageType *field, bool *has_field = nullptr)
     {
-        ProtoBufDecoder sub_decoder{parse_bytearray_value()};
-        field->ProtoBufDecode(sub_decoder);
+        field->ProtoBufDecode(parse_bytearray_value());
         if(has_field)  *has_field = true;
     }
 
@@ -221,9 +225,6 @@ struct ProtoBufDecoder
     void parse_repeated_message_field(RepeatedMessageType *field)
     {
         using T = typename RepeatedMessageType::value_type;
-
-        ProtoBufDecoder sub_decoder{parse_bytearray_value()};
-        T value;  value.ProtoBufDecode(sub_decoder);
-        field->push_back(std::move(value));
+        field->push_back( ProtoBufDecode<T>(parse_bytearray_value()));
     }
 };

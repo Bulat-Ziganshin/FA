@@ -24,7 +24,7 @@ Features currently implemented and planned:
 - [x] repeated fields can be stored in any container implementing push_back() and begin()/end()
 - [x] the generated code checks presence of required fields in the decoded message
 - [ ] packed repeated fields
-- [ ] support of enum/oneof fields and nested message type definitions by the code generator
+- [ ] support of enum/oneof/map fields and nested message type definitions by the code generator
 - [ ] validation of enum, integer and bool values by the generated code
 - [ ] big-endian architectures
 - [ ] [efficient upb read_varint](https://github.com/protocolbuffers/protobuf/blob/a2f92689dac8a7dbea584919c7de52d6a28d66d1/upb/wire/decode.c#L122)

@@ -47,16 +47,13 @@ const char* compare(MainMessage& msg1, MainMessage& msg2)
 int main()
 {
     try {
-        MainMessage orig_msg = make_message(), decoded_msg;
+        MainMessage orig_msg = make_message();
 
-        // Encode message into string buffer
-        ProtoBufEncoder encoder;
-        orig_msg.ProtoBufEncode(encoder);
-        std::string buffer = encoder.result();
+        // Encode message into a string buffer
+        std::string buffer = ProtoBufEncode(orig_msg);
 
-        // Decode message from the buffer
-        ProtoBufDecoder decoder(buffer);
-        decoded_msg.ProtoBufDecode(decoder);
+        // Decode message from the string buffer
+        auto decoded_msg = ProtoBufDecode<MainMessage>(buffer);
 
         // Check whether the decoded message is the same as the original
         auto error = compare(orig_msg, decoded_msg);

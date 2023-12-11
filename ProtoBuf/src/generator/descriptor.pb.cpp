@@ -47,7 +47,7 @@ struct FieldDescriptorProto
     bool has_type_name = false;
     bool has_default_value = false;
 
-    void ProtoBufDecode(ProtoBufDecoder &pb);
+    void ProtoBufDecode(std::string_view buffer);
 };
 
 
@@ -59,7 +59,7 @@ struct DescriptorProto
 
     bool has_name = false;
 
-    void ProtoBufDecode(ProtoBufDecoder &pb);
+    void ProtoBufDecode(std::string_view buffer);
 };
 
 
@@ -71,7 +71,7 @@ struct FileDescriptorProto
 
     bool has_name = false;
 
-    void ProtoBufDecode(ProtoBufDecoder &pb);
+    void ProtoBufDecode(std::string_view buffer);
 };
 
 
@@ -80,12 +80,14 @@ struct FileDescriptorSet
 {
     std::vector<FileDescriptorProto> file;
 
-    void ProtoBufDecode(ProtoBufDecoder &pb);
+    void ProtoBufDecode(std::string_view buffer);
 };
 
 
-void FieldDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
+void FieldDescriptorProto::ProtoBufDecode(std::string_view buffer)
 {
+    ProtoBufDecoder pb(buffer);
+
     while(pb.get_next_field())
     {
         switch(pb.field_num)
@@ -106,8 +108,10 @@ void FieldDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 }
 
 
-void DescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
+void DescriptorProto::ProtoBufDecode(std::string_view buffer)
 {
+    ProtoBufDecoder pb(buffer);
+
     while(pb.get_next_field())
     {
         switch(pb.field_num)
@@ -124,8 +128,10 @@ void DescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 }
 
 
-void FileDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
+void FileDescriptorProto::ProtoBufDecode(std::string_view buffer)
 {
+    ProtoBufDecoder pb(buffer);
+
     while(pb.get_next_field())
     {
         switch(pb.field_num)
@@ -142,8 +148,10 @@ void FileDescriptorProto::ProtoBufDecode(ProtoBufDecoder &pb)
 }
 
 
-void FileDescriptorSet::ProtoBufDecode(ProtoBufDecoder &pb)
+void FileDescriptorSet::ProtoBufDecode(std::string_view buffer)
 {
+    ProtoBufDecoder pb(buffer);
+
     while(pb.get_next_field())
     {
         switch(pb.field_num)
