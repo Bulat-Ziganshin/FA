@@ -1,3 +1,49 @@
+A minimal C++ ProtoBuf library that is
+- easy to learn
+- easy to use
+- adds minimal overhead to your executable
+
+
+## Motivating example
+
+Let's say that you wrote this message definition:
+```proto
+message Person
+{
+    required string name    = 1 [default = "AnnA"];
+    optional double weight  = 2 [default = 3.14];
+    repeated int32  numbers = 3;
+}
+```
+
+Codegen translates this definition to plain C++ structure:
+```cpp
+struct Person
+{
+    std::string name = "AnnA";
+    double weight = 3.14;
+    std::vector<int32_t> numbers;
+...
+};
+```
+
+But on top of this, Codegen generates all the code necessary
+to serialize Person to the ProtoBuf format and
+deserialize Person from the ProtoBuf format:
+```cpp
+// Encode Person into a string buffer
+std::string protobuf_msg = ProtoBufEncode(person);
+
+// Decode Person from a string buffer
+Person person2 = ProtoBufDecode<Person>(protobuf_msg);
+```
+
+And that's all you need to know to start using the library.
+Check technical details in Tutorial.
+
+
+## Details
+
 This is a minimal implementation of C++ ProtoBuf library:
 - optimized for code size, the entire library is only 400 LOC
 - reasonable speed due to use of std::string_view
