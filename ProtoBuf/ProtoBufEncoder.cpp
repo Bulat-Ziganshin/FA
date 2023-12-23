@@ -132,6 +132,65 @@ struct ProtoBufEncoder
     }
 
 
+#define define_writers(TYPE, C_TYPE, WIRETYPE, WRITER)                                                             \
+                                                                                                                   \
+    template <typename FieldType>                                                                                  \
+    void put_##TYPE(uint32_t field_num, FieldType value)                                                           \
+    {                                                                                                              \
+        write_field_tag(field_num, WIRETYPE);                                                                      \
+        WRITER(value);                                                                                             \
+    }                                                                                                              \
+                                                                                                                   \
+    template <typename FieldType>                                                                                  \
+    void put_repeated_##TYPE(uint32_t field_num, FieldType&& value)                                                \
+    {                                                                                                              \
+        for(auto &x: value)  put_##TYPE(field_num, x);                                                             \
+    }                                                                                                              \
+                                                                                                                   \
+    template <typename FieldType>                                                                                  \
+    void put_packed_##TYPE(uint32_t field_num, FieldType&& value)                                                  \
+    {                                                                                                              \
+        write_field_tag(field_num, WIRETYPE_LENGTH_DELIMITED);                                                     \
+        write_length_delimited([&]{ for(auto &x: value)  WRITER(x); });                                            \
+    }                                                                                                              \
+
+
+    define_writers(int32, int32_t, WIRETYPE_VARINT, write_varint)
+    define_writers(int64, int64_t, WIRETYPE_VARINT, write_varint)
+    define_writers(uint32, uint32_t, WIRETYPE_VARINT, write_varint)
+    define_writers(uint64, uint64_t, WIRETYPE_VARINT, write_varint)
+
+    define_writers(sfixed32, int32_t, WIRETYPE_FIXED32, write_fixed_width)
+    define_writers(sfixed64, int64_t, WIRETYPE_FIXED64, write_fixed_width)
+    define_writers(fixed32, uint32_t, WIRETYPE_FIXED32, write_fixed_width)
+    define_writers(fixed64, uint64_t, WIRETYPE_FIXED64, write_fixed_width)
+
+    define_writers(sint32, int32_t, WIRETYPE_VARINT, write_zigzag)
+    define_writers(sint64, int64_t, WIRETYPE_VARINT, write_zigzag)
+
+    define_writers(bool, bool, WIRETYPE_VARINT, write_varint)
+    define_writers(enum, int32_t, WIRETYPE_VARINT, write_varint)
+
+    define_writers(float, float, WIRETYPE_FIXED32, write_fixed_width)
+    define_writers(double, double, WIRETYPE_FIXED64, write_fixed_width)
+
+    define_writers(string, std::string_view, WIRETYPE_LENGTH_DELIMITED, write_bytearray)
+    define_writers(bytes, std::string_view, WIRETYPE_LENGTH_DELIMITED, write_bytearray)
+
+    template <typename FieldType>
+    void put_message(uint32_t field_num, FieldType&& value)
+    {
+        write_field_tag(field_num, WIRETYPE_LENGTH_DELIMITED);
+        write_length_delimited([&]{ value.ProtoBufEncode(*this); });
+    }
+
+    template <typename FieldType>
+    void put_repeated_message(uint32_t field_num, FieldType&& value)
+    {
+        for(auto &x: value)  put_message(field_num, x);
+    }
+
+
     template <typename FieldType>
     void write_fixed_width_field(uint32_t field_num, FieldType value)
     {

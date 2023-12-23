@@ -24,6 +24,7 @@ struct ProtoBufDecoder
 {
     enum WireType
     {
+      WIRETYPE_UNDEFINED = -1,
       WIRETYPE_VARINT = 0,
       WIRETYPE_FIXED64 = 1,
       WIRETYPE_LENGTH_DELIMITED = 2,
@@ -34,8 +35,8 @@ struct ProtoBufDecoder
 
     const char* ptr = nullptr;
     const char* buf_end = nullptr;
-    uint32_t field_num;
-    WireType wire_type;
+    uint32_t field_num = -1;
+    WireType wire_type = WIRETYPE_UNDEFINED;
 
 
     explicit ProtoBufDecoder(const std::string_view& view) noexcept
@@ -48,6 +49,11 @@ struct ProtoBufDecoder
     {
         if(buf_end - ptr < bytes)  throw std::runtime_error("Unexpected end of buffer");
         ptr += bytes;
+    }
+
+    bool eof()
+    {
+        return(ptr >= buf_end);
     }
 
 
@@ -70,8 +76,8 @@ struct ProtoBufDecoder
         int shift = 0;
 
         do {
-            if(ptr == buf_end)  throw std::runtime_error("Unexpected end of buffer in varint");
-            if(shift >= 64)     throw std::runtime_error("More than 10 bytes in varint");
+            if(eof())        throw std::runtime_error("Unexpected end of buffer in varint");
+            if(shift >= 64)  throw std::runtime_error("More than 10 bytes in varint");
 
             byte = *(uint8_t*)ptr;
             value |= ((byte & 127) << shift);
@@ -80,6 +86,12 @@ struct ProtoBufDecoder
         while(byte & 128);
 
         return value;
+    }
+
+    int64_t read_zigzag()
+    {
+        uint64_t value = read_varint();
+        return (value >> 1) ^ (- int64_t(value & 1));
     }
 
 
@@ -108,10 +120,7 @@ struct ProtoBufDecoder
     int64_t parse_zigzag_value()
     {
         switch(wire_type) {
-            case WIRETYPE_VARINT: {
-                uint64_t value = read_varint();
-                return (value >> 1) ^ (- int64_t(value & 1));
-            }
+            case WIRETYPE_VARINT:   return read_zigzag();
             case WIRETYPE_FIXED64:  return read_fixed_width<int64_t>();
             case WIRETYPE_FIXED32:  return read_fixed_width<int32_t>();
         }
@@ -134,7 +143,7 @@ struct ProtoBufDecoder
 
     bool get_next_field()
     {
-        if(ptr == buf_end)  return false;
+        if(eof())  return false;
 
         uint64_t number = read_varint();
         field_num = (number / 8);
@@ -157,6 +166,77 @@ struct ProtoBufDecoder
         } else {
             throw std::runtime_error("Unsupported field type " + std::to_string(wire_type));
         }
+    }
+
+
+#define define_readers(TYPE, C_TYPE, PARSER, READER)                                                               \
+                                                                                                                   \
+    template <typename FieldType = C_TYPE>                                                                         \
+    FieldType get_##TYPE(bool *has_field = nullptr)                                                                \
+    {                                                                                                              \
+        FieldType result{PARSER()};                                                                                \
+        if(has_field)  *has_field = true;                                                                          \
+        return result;                                                                                             \
+    }                                                                                                              \
+                                                                                                                   \
+    template <typename FieldType>                                                                                  \
+    void get_##TYPE(FieldType *field, bool *has_field = nullptr)                                                   \
+    {                                                                                                              \
+        *field = FieldType(PARSER());                                                                              \
+        if(has_field)  *has_field = true;                                                                          \
+    }                                                                                                              \
+                                                                                                                   \
+    template <typename RepeatedFieldType>                                                                          \
+    void get_repeated_##TYPE(RepeatedFieldType *field)                                                             \
+    {                                                                                                              \
+        using FieldType = typename RepeatedFieldType::value_type;                                                  \
+                                                                                                                   \
+        if(std::is_scalar_v<C_TYPE>  &&  (wire_type == WIRETYPE_LENGTH_DELIMITED)) {                               \
+            /* Parsing packed repeated field */                                                                    \
+            ProtoBufDecoder decoder(parse_bytearray_value());                                                      \
+            while(! decoder.eof()) {                                                                               \
+                field->push_back(decoder.READER());                                                                \
+            }                                                                                                      \
+        } else {                                                                                                   \
+            field->push_back(PARSER());                                                                            \
+        }                                                                                                          \
+    }                                                                                                              \
+
+
+    define_readers(int32, int32_t, parse_integer_value, read_varint)
+    define_readers(int64, int64_t, parse_integer_value, read_varint)
+    define_readers(uint32, uint32_t, parse_integer_value, read_varint)
+    define_readers(uint64, uint64_t, parse_integer_value, read_varint)
+
+    define_readers(sfixed32, int32_t, parse_integer_value, read_fixed_width<int32_t>)
+    define_readers(sfixed64, int64_t, parse_integer_value, read_fixed_width<int64_t>)
+    define_readers(fixed32, uint32_t, parse_integer_value, read_fixed_width<uint32_t>)
+    define_readers(fixed64, uint64_t, parse_integer_value, read_fixed_width<uint64_t>)
+
+    define_readers(sint32, int32_t, parse_zigzag_value, read_zigzag)
+    define_readers(sint64, int64_t, parse_zigzag_value, read_zigzag)
+
+    define_readers(bool, bool, parse_integer_value, read_varint)
+    define_readers(enum, int32_t, parse_integer_value, read_varint)
+
+    define_readers(float, float, parse_fp_value<FieldType>, read_fixed_width<float>)
+    define_readers(double, double, parse_fp_value<FieldType>, read_fixed_width<double>)
+
+    define_readers(string, std::string_view, parse_bytearray_value, parse_bytearray_value)
+    define_readers(bytes, std::string_view, parse_bytearray_value, parse_bytearray_value)
+
+    template <typename MessageType>
+    void get_message(MessageType *field, bool *has_field = nullptr)
+    {
+        field->ProtoBufDecode(parse_bytearray_value());
+        if(has_field)  *has_field = true;
+    }
+
+    template <typename RepeatedMessageType>
+    void get_repeated_message(RepeatedMessageType *field)
+    {
+        using T = typename RepeatedMessageType::value_type;
+        field->push_back( ProtoBufDecode<T>(parse_bytearray_value()));
     }
 
 
