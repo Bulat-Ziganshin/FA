@@ -32,15 +32,15 @@ struct SubMessage
 
 void SubMessage::ProtoBufEncode(ProtoBufEncoder &pb)
 {
-    pb.write_varint_field(1, req_int64);
-    pb.write_zigzag_field(2, opt_sint32);
-    pb.write_varint_field(3, req_uint64);
-    pb.write_fixed_width_field(4, opt_fixed32);
-    pb.write_fixed_width_field(5, req_float);
-    pb.write_bytearray_field(6, opt_string);
-    pb.write_repeated_varint_field(11, rep_int32);
-    pb.write_repeated_varint_field(12, rep_uint64);
-    pb.write_repeated_fixed_width_field(13, rep_double);
+    pb.put_int64(1, req_int64);
+    pb.put_sint32(2, opt_sint32);
+    pb.put_uint64(3, req_uint64);
+    pb.put_fixed32(4, opt_fixed32);
+    pb.put_float(5, req_float);
+    pb.put_string(6, opt_string);
+    pb.put_repeated_int32(11, rep_int32);
+    pb.put_repeated_uint64(12, rep_uint64);
+    pb.put_repeated_double(13, rep_double);
 
 }
 
@@ -52,15 +52,15 @@ void SubMessage::ProtoBufDecode(std::string_view buffer)
     {
         switch(pb.field_num)
         {
-            case 1: pb.parse_integral_field(&req_int64, &has_req_int64); break;
-            case 2: pb.parse_zigzag_field(&opt_sint32, &has_opt_sint32); break;
-            case 3: pb.parse_integral_field(&req_uint64, &has_req_uint64); break;
-            case 4: pb.parse_integral_field(&opt_fixed32, &has_opt_fixed32); break;
-            case 5: pb.parse_fp_field(&req_float, &has_req_float); break;
-            case 6: pb.parse_bytearray_field(&opt_string, &has_opt_string); break;
-            case 11: pb.parse_repeated_integral_field(&rep_int32); break;
-            case 12: pb.parse_repeated_integral_field(&rep_uint64); break;
-            case 13: pb.parse_repeated_fp_field(&rep_double); break;
+            case 1: pb.get_int64(&req_int64, &has_req_int64); break;
+            case 2: pb.get_sint32(&opt_sint32, &has_opt_sint32); break;
+            case 3: pb.get_uint64(&req_uint64, &has_req_uint64); break;
+            case 4: pb.get_fixed32(&opt_fixed32, &has_opt_fixed32); break;
+            case 5: pb.get_float(&req_float, &has_req_float); break;
+            case 6: pb.get_string(&opt_string, &has_opt_string); break;
+            case 11: pb.get_repeated_int32(&rep_int32); break;
+            case 12: pb.get_repeated_uint64(&rep_uint64); break;
+            case 13: pb.get_repeated_double(&rep_double); break;
 
             default: pb.skip_field();
         }
@@ -105,15 +105,15 @@ struct MainMessage
 
 void MainMessage::ProtoBufEncode(ProtoBufEncoder &pb)
 {
-    pb.write_varint_field(1, opt_uint32);
-    pb.write_fixed_width_field(2, req_sfixed64);
-    pb.write_fixed_width_field(3, opt_double);
-    pb.write_bytearray_field(4, req_bytes);
-    pb.write_message_field(5, req_msg);
-    pb.write_repeated_zigzag_field(11, rep_sint32);
-    pb.write_repeated_fixed_width_field(12, rep_fixed64);
-    pb.write_repeated_bytearray_field(13, rep_string);
-    pb.write_repeated_message_field(14, rep_msg);
+    pb.put_uint32(1, opt_uint32);
+    pb.put_sfixed64(2, req_sfixed64);
+    pb.put_double(3, opt_double);
+    pb.put_bytes(4, req_bytes);
+    pb.put_message(5, req_msg);
+    pb.put_repeated_sint32(11, rep_sint32);
+    pb.put_repeated_fixed64(12, rep_fixed64);
+    pb.put_repeated_string(13, rep_string);
+    pb.put_repeated_message(14, rep_msg);
 
 }
 
@@ -125,15 +125,15 @@ void MainMessage::ProtoBufDecode(std::string_view buffer)
     {
         switch(pb.field_num)
         {
-            case 1: pb.parse_integral_field(&opt_uint32, &has_opt_uint32); break;
-            case 2: pb.parse_integral_field(&req_sfixed64, &has_req_sfixed64); break;
-            case 3: pb.parse_fp_field(&opt_double, &has_opt_double); break;
-            case 4: pb.parse_bytearray_field(&req_bytes, &has_req_bytes); break;
-            case 5: pb.parse_message_field(&req_msg, &has_req_msg); break;
-            case 11: pb.parse_repeated_zigzag_field(&rep_sint32); break;
-            case 12: pb.parse_repeated_integral_field(&rep_fixed64); break;
-            case 13: pb.parse_repeated_bytearray_field(&rep_string); break;
-            case 14: pb.parse_repeated_message_field(&rep_msg); break;
+            case 1: pb.get_uint32(&opt_uint32, &has_opt_uint32); break;
+            case 2: pb.get_sfixed64(&req_sfixed64, &has_req_sfixed64); break;
+            case 3: pb.get_double(&opt_double, &has_opt_double); break;
+            case 4: pb.get_bytes(&req_bytes, &has_req_bytes); break;
+            case 5: pb.get_message(&req_msg, &has_req_msg); break;
+            case 11: pb.get_repeated_sint32(&rep_sint32); break;
+            case 12: pb.get_repeated_fixed64(&rep_fixed64); break;
+            case 13: pb.get_repeated_string(&rep_string); break;
+            case 14: pb.get_repeated_message(&rep_msg); break;
 
             default: pb.skip_field();
         }
