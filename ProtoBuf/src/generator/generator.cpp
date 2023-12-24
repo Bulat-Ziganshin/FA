@@ -64,50 +64,31 @@ constexpr const char* CHECK_REQUIRED_FIELD_TEMPLATE = R"---(
 
 
 
-std::string_view encoder_domain_string(FieldDescriptorProto &field)
+std::string_view field_type_as_str(FieldDescriptorProto &field)
 {
     switch(field.type)
     {
-        case FieldDescriptorProto::TYPE_DOUBLE:
-        case FieldDescriptorProto::TYPE_FLOAT:
-        case FieldDescriptorProto::TYPE_FIXED64:
-        case FieldDescriptorProto::TYPE_FIXED32:
-        case FieldDescriptorProto::TYPE_SFIXED32:
-        case FieldDescriptorProto::TYPE_SFIXED64: return "fixed_width";
-
-        case FieldDescriptorProto::TYPE_SINT32:
-        case FieldDescriptorProto::TYPE_SINT64:   return "zigzag";
-
-        case FieldDescriptorProto::TYPE_STRING:
-        case FieldDescriptorProto::TYPE_BYTES:    return "bytearray";
-
-        case FieldDescriptorProto::TYPE_MESSAGE:  return "message";
-
-        case FieldDescriptorProto::TYPE_GROUP:    return "?group";
-
-        default:                                  return "varint";
+        case FieldDescriptorProto::TYPE_DOUBLE:    return "double";
+        case FieldDescriptorProto::TYPE_FLOAT:     return "float";
+        case FieldDescriptorProto::TYPE_INT64:     return "int64";
+        case FieldDescriptorProto::TYPE_UINT64:    return "uint64";
+        case FieldDescriptorProto::TYPE_INT32:     return "int32";
+        case FieldDescriptorProto::TYPE_FIXED64:   return "fixed64";
+        case FieldDescriptorProto::TYPE_FIXED32:   return "fixed32";
+        case FieldDescriptorProto::TYPE_BOOL:      return "bool";
+        case FieldDescriptorProto::TYPE_STRING:    return "string";
+        case FieldDescriptorProto::TYPE_GROUP:     return "?group";
+        case FieldDescriptorProto::TYPE_MESSAGE:   return "message";
+        case FieldDescriptorProto::TYPE_BYTES:     return "bytes";
+        case FieldDescriptorProto::TYPE_UINT32:    return "uint32";
+        case FieldDescriptorProto::TYPE_ENUM:      return "enum";
+        case FieldDescriptorProto::TYPE_SFIXED32:  return "sfixed32";
+        case FieldDescriptorProto::TYPE_SFIXED64:  return "sfixed64";
+        case FieldDescriptorProto::TYPE_SINT32:    return "sint32";
+        case FieldDescriptorProto::TYPE_SINT64:    return "sint64";
     }
-}
 
-std::string_view decoder_domain_string(FieldDescriptorProto &field)
-{
-    switch(field.type)
-    {
-        case FieldDescriptorProto::TYPE_DOUBLE:
-        case FieldDescriptorProto::TYPE_FLOAT:    return "fp";
-
-        case FieldDescriptorProto::TYPE_SINT32:
-        case FieldDescriptorProto::TYPE_SINT64:   return "zigzag";
-
-        case FieldDescriptorProto::TYPE_STRING:
-        case FieldDescriptorProto::TYPE_BYTES:    return "bytearray";
-
-        case FieldDescriptorProto::TYPE_MESSAGE:  return "message";
-
-        case FieldDescriptorProto::TYPE_GROUP:    return "?group";
-
-        default:                                  return "integral";
-    }
+    return "?type";
 }
 
 std::string_view base_type_string(FieldDescriptorProto &field)
@@ -170,6 +151,8 @@ void generator(FileDescriptorSet &proto)
 
         for (auto field: message_type.field)
         {
+            auto field_type_str = field_type_as_str(field);
+
             // Generate message structure
             std::string default_str;
             if (field.has_default_value) {
@@ -187,19 +170,17 @@ void generator(FileDescriptorSet &proto)
 
 
             // Generate message encoding function
-            auto encoder_domain = encoder_domain_string(field);
             auto repeated = (field.label == FieldDescriptorProto::LABEL_REPEATED? "repeated_":"");
-            encoder += std::format("    pb.write_{0}{1}_field({2}, {3});\n", repeated, encoder_domain, field.number, field.name);
+            encoder += std::format("    pb.put_{0}{1}({2}, {3});\n", repeated, field_type_str, field.number, field.name);
 
 
             // Generate message decoding function
-            auto decoder_domain = decoder_domain_string(field);
             std::string decoder;
 
             if (field.label == FieldDescriptorProto::LABEL_REPEATED) {
-                decoder = std::format("pb.parse_repeated_{0}_field(&{1})", decoder_domain, field.name);
+                decoder = std::format("pb.get_repeated_{0}(&{1})", field_type_str, field.name);
             } else {
-                decoder = std::format("pb.parse_{0}_field(&{1}, &has_{1})", decoder_domain, field.name);
+                decoder = std::format("pb.get_{0}(&{1}, &has_{1})", field_type_str, field.name);
             }
 
             decode_cases += std::format("            case {}: {}; break;\n", field.number, decoder);

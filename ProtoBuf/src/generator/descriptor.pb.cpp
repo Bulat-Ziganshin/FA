@@ -92,12 +92,12 @@ void FieldDescriptorProto::ProtoBufDecode(std::string_view buffer)
     {
         switch(pb.field_num)
         {
-            case 1: pb.parse_bytearray_field(&name,          &has_name); break;
-            case 3: pb.parse_integral_field (&number,        &has_number); break;
-            case 4: pb.parse_integral_field (&label,         &has_label); break;
-            case 5: pb.parse_integral_field (&type,          &has_type); break;
-            case 6: pb.parse_bytearray_field(&type_name,     &has_type_name); break;
-            case 7: pb.parse_bytearray_field(&default_value, &has_default_value); break;
+            case 1: pb.get_string(&name,          &has_name); break;
+            case 3: pb.get_int32 (&number,        &has_number); break;
+            case 4: pb.get_enum  (&label,         &has_label); break;
+            case 5: pb.get_enum  (&type,          &has_type); break;
+            case 6: pb.get_string(&type_name,     &has_type_name); break;
+            case 7: pb.get_string(&default_value, &has_default_value); break;
             default: pb.skip_field();
         }
     }
@@ -116,8 +116,8 @@ void DescriptorProto::ProtoBufDecode(std::string_view buffer)
     {
         switch(pb.field_num)
         {
-            case 1: pb.parse_bytearray_field(&name, &has_name); break;
-            case 2: pb.parse_repeated_message_field(&field); break;
+            case 1: pb.get_string(&name, &has_name); break;
+            case 2: pb.get_repeated_message(&field); break;
             default: pb.skip_field();
         }
     }
@@ -136,8 +136,8 @@ void FileDescriptorProto::ProtoBufDecode(std::string_view buffer)
     {
         switch(pb.field_num)
         {
-            case 1: pb.parse_bytearray_field(&name, &has_name); break;
-            case 4: pb.parse_repeated_message_field(&message_type); break;
+            case 1: pb.get_string(&name, &has_name); break;
+            case 4: pb.get_repeated_message(&message_type); break;
             default: pb.skip_field();
         }
     }
@@ -156,7 +156,7 @@ void FileDescriptorSet::ProtoBufDecode(std::string_view buffer)
     {
         switch(pb.field_num)
         {
-            case 1: pb.parse_repeated_message_field(&file); break;
+            case 1: pb.get_repeated_message(&file); break;
             default: pb.skip_field();
         }
     }
