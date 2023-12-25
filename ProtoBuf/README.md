@@ -27,7 +27,7 @@ struct Person
 };
 ```
 
-But on top of this, Codegen generates all the code necessary
+But on top of that, Codegen generates all the code necessary
 to serialize Person to the ProtoBuf format and
 deserialize Person from the ProtoBuf format:
 ```cpp
@@ -40,6 +40,39 @@ Person person2 = ProtoBufDecode<Person>(protobuf_msg);
 
 And that's all you need to know to start using the library.
 Check technical details in Tutorial.
+
+But even if you want to write (de)serializers manually, it's also easy:
+
+```cpp
+void MainMessage::ProtoBufEncode(ProtoBufEncoder &pb)
+{
+    pb.put_string(1, name);
+    pb.put_double(2, weight);
+    pb.put_repeated_int32(3, ids);
+}
+
+void MainMessage::ProtoBufDecode(std::string_view buffer)
+{
+    ProtoBufDecoder pb(buffer);
+
+    while(pb.get_next_field())
+    {
+        switch(pb.field_num)
+        {
+            case 1: pb.get_string(&name); break;
+            case 2: pb.get_double(&weight); break;
+            case 3: pb.get_repeated_int32(&ids); break;
+            default: pb.skip_field();
+        }
+    }
+}
+```
+
+I.e. you just use put_<FIELD_TYPE> or put_repeated_<FIELD_TYPE> to write a [repeated] field,
+and get_<FIELD_TYPE> or get_repeated_<FIELD_TYPE> to read one.
+Field number should be the first parameter in put_* calls,
+and placed in the case label before get_* calls.
+
 
 
 ## Details
@@ -55,22 +88,23 @@ simple ProtoBuf messages without inflating your program.
 There is no any build infrastructure - if you need this code, just grab it and go!
 
 Files:
-- [Example.proto](Example.proto) - ProtoBuf definition of the serialized structure
-- [Example.pb.cpp](Example.pb.cpp) - auto-generated corresponding C++ structure and ProtoBuf encoder/decoder for it
-- [ProtoBufEncoder.cpp](ProtoBufEncoder.cpp) - library used by the encoder
-- [ProtoBufDecoder.cpp](ProtoBufDecoder.cpp) - library used by the decoder
-- [main.cpp](main.cpp) - brief usage example
-- [decoder.cpp](decoder.cpp) - schema-less decoder of arbitrary ProtoBuf messages
+- [ProtoBufEncoder.cpp](ProtoBufEncoder.cpp) - the encoding library
+- [ProtoBufDecoder.cpp](ProtoBufDecoder.cpp) - the decoding library
 - [generator.cpp](src/generator/generator.cpp) - generator of encoders/decoders from .pbs files
+- [decoder.cpp](decoder.cpp) - schema-less decoder of arbitrary ProtoBuf messages
+- Example:
+    - [main.cpp](main.cpp) - brief usage example
+    - [Example.proto](Example.proto) - ProtoBuf definition of the serialized structure
+    - [Example.pb.cpp](Example.pb.cpp) - auto-generated corresponding C++ structure and ProtoBuf encoder/decoder for it
 
 Features currently implemented and planned:
 - [x] encoding & decoding (requires C++17, may be lowered to C++11 by replacing uses of std::string_view with std::string)
-- [x] any scalar/message fields, including repeated ones
+- [x] any scalar/message fields, including repeated and packed ones
 - [x] string/bytes fields can be stored in any type convertible from std::string_view
 - [x] repeated fields can be stored in any container implementing push_back() and begin()/end()
 - [x] the generated code checks presence of required fields in the decoded message
-- [ ] packed repeated fields
 - [ ] support of enum/oneof/map fields and nested message type definitions by the code generator
+(and thus dogfooding it)
 - [ ] validation of enum, integer and bool values by the generated code
 - [ ] big-endian architectures
 - [ ] [efficient upb read_varint](https://github.com/protocolbuffers/protobuf/blob/a2f92689dac8a7dbea584919c7de52d6a28d66d1/upb/wire/decode.c#L122)

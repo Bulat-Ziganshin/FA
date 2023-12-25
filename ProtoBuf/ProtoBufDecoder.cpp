@@ -171,12 +171,10 @@ struct ProtoBufDecoder
 
 #define define_readers(TYPE, C_TYPE, PARSER, READER)                                                               \
                                                                                                                    \
-    template <typename FieldType = C_TYPE>                                                                         \
-    FieldType get_##TYPE(bool *has_field = nullptr)                                                                \
+    C_TYPE get_##TYPE()                                                                                            \
     {                                                                                                              \
-        FieldType result{PARSER()};                                                                                \
-        if(has_field)  *has_field = true;                                                                          \
-        return result;                                                                                             \
+        using FieldType = C_TYPE;                                                                                  \
+        return FieldType(PARSER());                                                                                \
     }                                                                                                              \
                                                                                                                    \
     template <typename FieldType>                                                                                  \
@@ -191,7 +189,7 @@ struct ProtoBufDecoder
     {                                                                                                              \
         using FieldType = typename RepeatedFieldType::value_type;                                                  \
                                                                                                                    \
-        if(std::is_scalar_v<C_TYPE>  &&  (wire_type == WIRETYPE_LENGTH_DELIMITED)) {                               \
+        if(std::is_scalar<C_TYPE>()  &&  (wire_type == WIRETYPE_LENGTH_DELIMITED)) {                               \
             /* Parsing packed repeated field */                                                                    \
             ProtoBufDecoder decoder(parse_bytearray_value());                                                      \
             while(! decoder.eof()) {                                                                               \

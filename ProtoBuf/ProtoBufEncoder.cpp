@@ -134,8 +134,7 @@ struct ProtoBufEncoder
 
 #define define_writers(TYPE, C_TYPE, WIRETYPE, WRITER)                                                             \
                                                                                                                    \
-    template <typename FieldType>                                                                                  \
-    void put_##TYPE(uint32_t field_num, FieldType value)                                                           \
+    void put_##TYPE(uint32_t field_num, C_TYPE value)                                                              \
     {                                                                                                              \
         write_field_tag(field_num, WIRETYPE);                                                                      \
         WRITER(value);                                                                                             \
@@ -150,6 +149,9 @@ struct ProtoBufEncoder
     template <typename FieldType>                                                                                  \
     void put_packed_##TYPE(uint32_t field_num, FieldType&& value)                                                  \
     {                                                                                                              \
+        static_assert(std::is_scalar<C_TYPE>(),                                                                    \
+            "put_packed_" #TYPE " isn't defined according to ProtoBuf format specifications");                     \
+                                                                                                                   \
         write_field_tag(field_num, WIRETYPE_LENGTH_DELIMITED);                                                     \
         write_length_delimited([&]{ for(auto &x: value)  WRITER(x); });                                            \
     }                                                                                                              \
