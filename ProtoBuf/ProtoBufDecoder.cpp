@@ -193,10 +193,10 @@ struct ProtoBufDecoder
             /* Parsing packed repeated field */                                                                    \
             ProtoBufDecoder decoder(parse_bytearray_value());                                                      \
             while(! decoder.eof()) {                                                                               \
-                field->push_back(decoder.READER());                                                                \
+                field->push_back( FieldType(decoder.READER()) );                                                   \
             }                                                                                                      \
         } else {                                                                                                   \
-            field->push_back(PARSER());                                                                            \
+            field->push_back( FieldType(PARSER()) );                                                               \
         }                                                                                                          \
     }                                                                                                              \
 

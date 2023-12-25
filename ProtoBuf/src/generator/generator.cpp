@@ -64,7 +64,7 @@ constexpr const char* CHECK_REQUIRED_FIELD_TEMPLATE = R"---(
 
 
 
-std::string_view field_type_as_str(FieldDescriptorProto &field)
+std::string_view protobuf_type_as_str(FieldDescriptorProto &field)
 {
     switch(field.type)
     {
@@ -91,7 +91,7 @@ std::string_view field_type_as_str(FieldDescriptorProto &field)
     return "?type";
 }
 
-std::string_view base_type_string(FieldDescriptorProto &field)
+std::string_view base_cpp_type_as_str(FieldDescriptorProto &field)
 {
     // According to https://github.com/protocolbuffers/protobuf/blob/c05b320d9c18173bfce36c4bef22f9953d340ff9/src/google/protobuf/descriptor.h#L780
     switch(field.type)
@@ -119,7 +119,7 @@ std::string_view base_type_string(FieldDescriptorProto &field)
         case FieldDescriptorProto::TYPE_ENUM:     return "int32_t";
 
         case FieldDescriptorProto::TYPE_STRING:
-        case FieldDescriptorProto::TYPE_BYTES:    return "std::string_view";
+        case FieldDescriptorProto::TYPE_BYTES:    return "std::string";
 
         case FieldDescriptorProto::TYPE_MESSAGE:  return field.type_name.substr(1);
 
@@ -129,9 +129,9 @@ std::string_view base_type_string(FieldDescriptorProto &field)
     return "?type";
 }
 
-std::string type_string(FieldDescriptorProto &field)
+std::string cpp_type_as_str(FieldDescriptorProto &field)
 {
-    auto result = base_type_string(field);
+    auto result = base_cpp_type_as_str(field);
 
     if (field.label == FieldDescriptorProto::LABEL_REPEATED) {
         return std::format("std::vector<{}>", result);
@@ -151,7 +151,8 @@ void generator(FileDescriptorSet &proto)
 
         for (auto field: message_type.field)
         {
-            auto field_type_str = field_type_as_str(field);
+            auto pbtype_str = protobuf_type_as_str(field);  // PB type as used in .proto file (e.g. "fixed32")
+            auto cpptype_str = cpp_type_as_str(field);      // C++ type for the field (e.g. "std::vector<int32_t>")
 
             // Generate message structure
             std::string default_str;
@@ -161,8 +162,7 @@ void generator(FileDescriptorSet &proto)
                 default_str = std::format(" = {0}{1}{0}", quote_str, field.default_value);
             }
 
-            auto type_str = type_string(field);
-            fields_defs += std::format("    {} {}{};\n", type_str, field.name, default_str);
+            fields_defs += std::format("    {} {}{};\n", cpptype_str, field.name, default_str);
 
             if (field.label != FieldDescriptorProto::LABEL_REPEATED) {
                 has_fields_defs += std::format("    bool has_{} = false;\n", field.name);
@@ -171,19 +171,19 @@ void generator(FileDescriptorSet &proto)
 
             // Generate message encoding function
             auto repeated = (field.label == FieldDescriptorProto::LABEL_REPEATED? "repeated_":"");
-            encoder += std::format("    pb.put_{0}{1}({2}, {3});\n", repeated, field_type_str, field.number, field.name);
+            encoder += std::format("    pb.put_{0}{1}({2}, {3});\n", repeated, pbtype_str, field.number, field.name);
 
 
             // Generate message decoding function
-            std::string decoder;
+            std::string get_call;
 
             if (field.label == FieldDescriptorProto::LABEL_REPEATED) {
-                decoder = std::format("pb.get_repeated_{0}(&{1})", field_type_str, field.name);
+                get_call = std::format("pb.get_repeated_{0}(&{1})", pbtype_str, field.name);
             } else {
-                decoder = std::format("pb.get_{0}(&{1}, &has_{1})", field_type_str, field.name);
+                get_call = std::format("pb.get_{0}(&{1}, &has_{1})", pbtype_str, field.name);
             }
 
-            decode_cases += std::format("            case {}: {}; break;\n", field.number, decoder);
+            decode_cases += std::format("            case {}: {}; break;\n", field.number, get_call);
 
             if (field.label == FieldDescriptorProto::LABEL_REQUIRED) {
                 check_required_fields += std::format(CHECK_REQUIRED_FIELD_TEMPLATE, message_type.name, field.name);

@@ -4,10 +4,10 @@ A minimal C++ ProtoBuf library that is
 - adds minimal overhead to your executable
 
 Also:
-- optimized for code size, the entire library is only 400 LOC
-- reasonable speed due to use of std::string_view
+- easy to grok and hack, the entire library is only 400 LOC
+- fast enough, but not super-optimized for speed
 - generator of corresponding C++ structures and encoders/decoders from .pbs (compiled .proto) files
-- the closest competition is [protozero](https://github.com/mapbox/protozero)
+- the closest competitor is [protozero](https://github.com/mapbox/protozero)
 
 This library is sincerely yours if you need to quickly implement encoding/decoding of
 simple ProtoBuf messages without inflating your program.

@@ -13,7 +13,7 @@ struct SubMessage
     uint64_t req_uint64;
     uint32_t opt_fixed32;
     float req_float;
-    std::string_view opt_string = "DEFAULT STRING";
+    std::string opt_string = "DEFAULT STRING";
     std::vector<int32_t> rep_int32;
     std::vector<uint64_t> rep_uint64;
     std::vector<double> rep_double;
@@ -85,11 +85,11 @@ struct MainMessage
     uint32_t opt_uint32;
     int64_t req_sfixed64;
     double opt_double = 3.14;
-    std::string_view req_bytes;
+    std::string req_bytes;
     SubMessage req_msg;
     std::vector<int32_t> rep_sint32;
     std::vector<uint64_t> rep_fixed64;
-    std::vector<std::string_view> rep_string;
+    std::vector<std::string> rep_string;
     std::vector<SubMessage> rep_msg;
 
     bool has_opt_uint32 = false;
